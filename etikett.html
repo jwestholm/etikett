@@ -1,0 +1,1743 @@
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/fabric@4.5.1/dist/fabric.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <style>
+        canvas {
+            width: 100%; /* Canvas tar upp hela sidbredden */
+            height: auto; /* Höjden justeras automatiskt för att bevara proportioner */
+        }
+        #controls {
+            text-align: center; /* Centrerar kontrollerna */
+            margin-bottom: 10px; /* Lägger till lite avstånd under kontrollerna */
+        }
+		.group-box {
+			border: 1px solid #ccc; /* Gräns runt grupprutan */
+			border-radius: 5px; /* Rundade hörn */
+			padding-left: 15px; /* Inre marginaler */
+			margin: 2px 0; /* Yttre marginaler */
+			background-color: #f9f9f9; /* Bakgrundsfärg */
+		}
+
+		
+		.text-style-buttons {
+			display: flex;
+			gap: 10px; /* Avstånd mellan knapparna */
+			margin: 0px 0;
+		}
+.text-controls {
+    display: flex;
+    align-items: center; /* Vertikal centrering av alla element */
+    gap: 10px; /* Avstånd mellan kontrollerna */
+    flex-wrap: nowrap; /* Förhindrar radbrytning */
+    margin: 10px 0;
+}
+ .action-button {
+ background-color: white;
+			border: 2px solid #ccc;
+			padding: 10px;
+			border-radius: 5px;
+			cursor: pointer;
+			font-size: 16px;	
+			height: 42px; /* Samma höjd som de andra knapparna */			
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			transition: background-color 0.3s ease, border-color 0.3s ease;
+ }
+.action-button:hover {
+    background-color: #f0f0f0;
+}
+
+.action-button i {
+    margin-right: 5px; /* Liten marginal mellan ikon och text */
+    font-size: 18px;
+}
+
+.text-actions {
+    display: flex;
+    gap: 10px; /* Utrymme mellan knapparna */
+}
+
+.add-text-btn {
+    color: #007bff; /* Blå text för att lägga till text */
+    border: 1px solid #007bff;
+}
+
+.remove-text-btn {
+    color: #dc3545; /* Röd text för att ta bort text */
+    border: 1px solid #dc3545;
+}
+
+.add-text-btn:hover {
+    background-color: #007bff;
+    color: white;
+}
+
+.remove-text-btn:hover {
+    background-color: #dc3545;
+    color: white;
+} 
+
+		.style-button {
+			background-color: white;
+			border: 2px solid #ccc;
+			padding: 10px;
+			border-radius: 5px;
+			cursor: pointer;
+			font-size: 16px;	
+			width: 42px; /* Standardbredd för färgknappen */
+			height: 42px; /* Samma höjd som de andra knapparna */			
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			transition: background-color 0.3s ease, border-color 0.3s ease;
+		}
+
+		.color-button {
+			height:42px;
+			width: 42px;
+			padding: 0;
+	
+		}
+
+		.color-button:hover {
+			border-color: #007bff;
+		}
+		.style-button i {
+			font-size: 18px;
+			color: black;
+		}
+
+		.style-button:hover {
+			background-color: #f0f0f0;
+			border-color: #999;
+		}
+
+		.style-button.active {
+			background-color: #007bff;
+			border-color: #0056b3;
+			color: white;
+		}
+
+		.style-button.active i {
+			color: white;
+		}
+		.styled-dropdown {
+    padding: 10px;
+    border-radius: 5px;
+    border: 2px solid #ccc;
+    font-size: 16px;
+    height: 42px; /* Samma höjd som knapparna */
+    font-family: 'Arial', sans-serif; /* Standardtypsnitt */
+    transition: border-color 0.3s ease, background-color 0.3s ease;
+    width: 250px; /* Anpassa bredden efter behov */
+}
+
+.styled-dropdown:focus {
+    border-color: #007bff; /* Blå kant vid fokus */
+    background-color: #f0f0f0; /* Ljus bakgrund vid fokus */
+    outline: none; /* Tar bort standardkonturen */
+}
+
+.styled-dropdown:hover {
+    border-color: #999; /* Ljusare kantfärg vid hover */
+}
+
+		#fontSelector {
+			padding: 10px;
+			border-radius: 5px;
+			border: 2px solid #ccc;
+			font-size: 16px;
+			height: 42px;
+			font-family: 'Arial', sans-serif; /* Standardtypsnitt */
+			transition: border-color 0.3s ease, background-color 0.3s ease;
+			width: 100px; /* Kan justeras beroende på ditt utrymme */
+		}
+
+		#fontSelector:focus {
+			border-color: #007bff; /* Blå kant vid fokus */
+			background-color: #f0f0f0; /* Ljus bakgrund vid fokus */
+			outline: none; /* Tar bort standardkonturen */
+		}
+
+		#fontSelector:hover {
+			border-color: #999; /* Ljusare kantfärg vid hover */
+		}
+
+		#fontSize {
+			width: 60px; /* Anpassa bredden för att passa storlekssiffror */
+			padding: 10px;
+			border-radius: 5px; /* Rundade hörn för enhetlighet */
+			border: 2px solid #ccc;
+			font-size: 16px; /* Samma textstorlek som knapparna */
+			text-align: center; /* Centrerar siffrorna i fältet */
+			transition: border-color 0.3s ease, background-color 0.3s ease;
+		}
+
+		#fontSize:focus {
+			border-color: #007bff; /* Blå kant när fältet är i fokus */
+			background-color: #f0f0f0; /* Ljus bakgrund vid fokus */
+			outline: none; /* Tar bort standardkonturen */
+		}
+		
+		.text-controls {
+			display: flex;
+			align-items: center;
+			gap: 10px; /* Avstånd mellan storleksfältet och knapparna */
+			margin: 10px 0;
+		}
+
+		.text-controls label {
+			font-size: 14px;
+			margin-right: 5px; /* Ger lite utrymme mellan label och input */
+		}
+		
+		#backgroundsTransparency {
+			padding: 10px;
+			border-radius: 5px;
+			border: 2px solid #ccc;
+			font-size: 16px;
+			width: 65px;
+			text-align: center;
+			transition: border-color 0.3s ease;
+		}
+
+		#backgroundsTransparency:focus {
+			border-color: #007bff;
+			outline: none;
+		}		
+		#transparency {
+			padding: 10px;
+			border-radius: 5px;
+			border: 2px solid #ccc;
+			font-size: 16px;
+			width: 65px;
+			text-align: center;
+			transition: border-color 0.3s ease;
+		}
+
+		#transparency:focus {
+			border-color: #007bff;
+			outline: none;
+		}
+
+		.vertical-divider {
+			width: 1px; /* Tunn linje */
+			background-color: #ccc; /* Färgen på linjen */
+			height: 42px; /* Höjden på linjen, justera efter behov */
+			margin: 0 0px; /* Lägger till lite utrymme runt linjen */
+			align-self: center; /* Centrerar linjen vertikalt */
+		}
+		
+.text-actions {
+    display: flex;
+    justify-content: center; /* Centrerar knapparna */
+    gap: 20px; /* Avstånd mellan knapparna */
+}
+.upload-image-btn {
+    background-color: white;
+    border: 2px solid #007bff;
+    color: #007bff;
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 16px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    height: 42px; /* Matcha höjden med de andra knapparna */
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.upload-image-btn i {
+    font-size: 18px;
+}
+
+.upload-image-btn:hover {
+    background-color: #007bff;
+    color: white;
+}
+
+.upload-image-btn:hover i {
+    color: white;
+}
+.save-btn {
+    background-color: white;
+    border: 2px solid #28a745; /* Grön färg för spara */
+    color: #28a745;
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 16px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px; /* Utrymme mellan ikonen och texten */
+    cursor: pointer;
+    height: 42px; /* Samma höjd som andra knappar */
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.save-btn:hover {
+    background-color: #28a745;
+    color: white;
+}
+
+.save-btn:hover i {
+    color: white; /* Ändra ikonens färg till vit vid hover */
+}
+
+.save-btn i {
+    font-size: 18px; /* Storlek på ikonen */
+}
+.save-pdf-btn {
+    background-color: white;
+    border: 2px solid #fd7e14; /* Orange färg */
+    color: #fd7e14;
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 16px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    height: 42px; /* Samma höjd som andra knappar */
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.save-pdf-btn:hover {
+    background-color: #fd7e14;
+    color: white;
+}
+
+.save-pdf-btn:hover i {
+    color: white;
+}
+
+.save-pdf-btn i {
+    font-size: 18px;
+}
+
+/* Modal som täcker hela skärmen */
+.modal {
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Halvtransparent svart bakgrund */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+#pixabayModal {
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Halvtransparent svart bakgrund */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#pixabayModal .modal-content {
+    width: 75%;
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    position: relative;
+}
+
+#pixabayModal .close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    cursor: pointer;
+    font-size: 24px;
+}
+
+#pixabayResults img {
+    width: 10%;
+    height: auto;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: transform 0.3s;
+}
+
+#pixabayResults img:hover {
+    transform: scale(1.05);
+}
+.pixabay-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.pixabay-modal-content {
+    background-color: white;
+    width: 75%;
+    padding: 20px;
+    border-radius: 15px;
+    position: relative;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.close-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    cursor: pointer;
+    font-size: 24px;
+    color: #333;
+}
+
+.pixabay-results img {
+    width: 100px;
+    height: 100px;
+    margin: 10px;
+    cursor: pointer;
+    transition: transform 0.3s;
+}
+
+.pixabay-results img:hover {
+    transform: scale(1.1);
+}
+
+
+
+/* Innehållet i modalen */
+.modal-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 18px;
+}
+
+/* CSS för snurranimationen */
+.spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin-bottom: 15px;
+}
+
+/* Animationen för snurren */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+
+@media (max-width: 768px) {
+    #fontSelector {
+        width: 100%;
+    }
+ .vertical-divider {
+        width: 100%; /* Gör den till en horisontell linje */
+        height: 1px; /* Tunn linje */
+        margin: 10px 0; /* Justera marginalen för horisontell linje */
+    }
+    .text-controls {
+        flex-direction: column; /* Placera kontrollerna under varandra på små skärmar */
+        align-items: flex-start;
+    }
+}		
+    </style>
+
+
+<div id="loadingModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="spinner"></div>
+        <p id="loadingText">Laddar in bilder...</p>
+    </div>
+</div>
+
+    <div id="controls">
+		<div class="group-box">
+		<h3>Bakgrundsbild och Swish QR kod</h3>
+			<div class="text-controls">		
+			
+			<label for="templateSelection">Välj mall:</label>
+			<select id="templateSelection" class="styled-dropdown">
+				<option value="">Ingen</option>
+				<option value="dronarhamnd" selected="">Drönarhämnd (Pravda)</option>
+				<option value="gravity">GRAVITY (Ten Men)</option>
+				<option value="blagulaOlen">Blågula Ölen (BFU)</option>
+				<option value="punchputin">Punch Putin with a SMASH! (BFU)</option>
+				<option value="sommarol">Sommarölen (BFU)</option>
+				<option value="putinhuilo">Putin Huilo (Pravda)</option>
+				<option value="redeyes">Red Eyes (Pravda)</option>		
+				<option value="frau">Frau Ribbentrop (Pravda)</option>
+				<option value="fromsan">From San to Don (Pravda)</option>				
+				<option value="syla">Syla (Pravda)</option>								
+			</select>
+			<span>eller</span>
+			<button id="uploadImageButton" class="action-button upload-image-btn"><i class="fas fa-folder-open"></i>Välj egen etikett</button>
+			<button id="pixabaySearchButton" class="action-button search-image-btn"><i class="fas fa-search"></i> Sök på Pixabay</button>
+
+			<input type="file" id="imageUpload" accept="image/png, image/jpeg" style="display: none;">
+			<div class="vertical-divider"></div>
+			<label for="qrCodeSelection">Välj Swish QR-kod</label>
+			<select id="qrCodeSelection" class="styled-dropdown">
+				<option value="">Ingen QR-kod</option>
+				<option value="drones2ukraine">Drones2Ukraine</option>
+				<option value="blagulabilen">Blågula Bilen</option>
+				<option value="nattravn">Projekt Nattravn</option>
+				<option value="powerupukraine">Power Up Ukraine</option>
+				<option value="ukrainahjalpen">Ukraina Hjälpen</option>
+				<option value="operationaid">Operation Aid</option>
+				<option value="svenskkrigare">Svensk Krigare</option>
+				<option value="swedishresquers">Swedish Rescuers</option>
+				<option value="skickavidaretillukraina">Skicka vidare till Ukraina</option>
+				<option value="svenskbyborna">Svenskbyborna</option>
+    				
+			</select>
+			</div>
+		</div>
+		<div class="group-box">
+				<h3>Text och Font</h3>
+		<div class="text-controls">		
+		
+		<div class="text-actions">
+			<button id="addTextButton" class="action-button add-text-btn"><i class="fas fa-plus"></i> Lägg till text</button>
+			<button id="removeTextButton" class="action-button remove-text-btn"><i class="fas fa-trash-alt"></i> Ta bort text</button>
+		</div>
+			<div class="vertical-divider"></div>
+			
+			<label for="fontSelector">Font</label>
+			<select id="fontSelector">
+				<option value="Arial" style="font-family: Arial;">Arial</option>
+				<option value="Helvetica" style="font-family: Helvetica;">Helvetica</option>
+				<option value="Verdana" style="font-family: Verdana;">Verdana</option>
+				<option value="Tahoma" style="font-family: Tahoma;">Tahoma</option>
+				<option value="Trebuchet MS" style="font-family: 'Trebuchet MS';">Trebuchet MS</option>
+				<option value="Franklin Gothic Medium" style="font-family: 'Franklin Gothic Medium';">Franklin Gothic Medium</option>
+				<option value="Gill Sans" style="font-family: 'Gill Sans';">Gill Sans</option>
+				<option value="Century Gothic" style="font-family: 'Century Gothic';">Century Gothic</option>
+				<option value="Segoe UI" style="font-family: 'Segoe UI';">Segoe UI</option>
+				<option value="Lucida Sans" style="font-family: 'Lucida Sans';">Lucida Sans</option>
+				<option value="Open Sans" style="font-family: 'Open Sans';">Open Sans</option>
+				<option value="Lato" style="font-family: 'Lato';">Lato</option>
+				<option value="Poppins" style="font-family: 'Poppins';">Poppins</option>
+				<option value="Times New Roman" style="font-family: 'Times New Roman';">Times New Roman</option>
+				<option value="Palatino Linotype" style="font-family: 'Palatino Linotype';">Palatino Linotype</option>
+				<option value="Cambria" style="font-family: 'Cambria';">Cambria</option>
+				<option value="Garamond" style="font-family: 'Garamond';">Garamond</option>
+				<option value="Book Antiqua" style="font-family: 'Book Antiqua';">Book Antiqua</option>
+				<option value="Didot" style="font-family: 'Didot';">Didot</option>
+				<option value="Bodoni MT" style="font-family: 'Bodoni MT';">Bodoni MT</option>
+				<option value="Georgia" style="font-family: Georgia;">Georgia</option>
+				<option value="Courier New" style="font-family: 'Courier New';">Courier New</option>
+				<option value="Courier" style="font-family: Courier;">Courier</option>
+				<option value="Lucida Console" style="font-family: 'Lucida Console';">Lucida Console</option>
+				<option value="Comic Sans MS" style="font-family: 'Comic Sans MS';">Comic Sans MS</option>
+				<option value="Brush Script MT" style="font-family: 'Brush Script MT';">Brush Script MT</option>
+				<option value="Impact" style="font-family: Impact;">Impact</option>
+				<option value="Arial Black" style="font-family: 'Arial Black';">Arial Black</option>
+				<option value="Futura" style="font-family: Futura;">Futura</option>
+				<option value="Copperplate" style="font-family: Copperplate;">Copperplate</option>
+			</select>
+
+
+
+			<input type="number" id="fontSize" value="20" min="4" max="200">
+			<div class="text-style-buttons">
+				<button id="boldButton" class="style-button"><i class="fas fa-bold"></i></button>
+				<button id="italicButton" class="style-button"><i class="fas fa-italic"></i></button>
+				<button id="underlineButton" class="style-button"><i class="fas fa-underline"></i></button>
+				<button id="alignButton" class="style-button"><i class="fas fa-align-left"></i></button>
+				
+			</div>
+
+			
+<!--			<label><input type="checkbox" id="boldCheckbox"> Fet</label>
+			<label><input type="checkbox" id="italicCheckbox"> Kursiv</label>
+			<label><input type="checkbox" id="underlineCheckbox"> Understruken</label>
+-->
+			<input type="color" class="color-button" id="colorPicker" value="#000000">
+
+			<input type="number" id="transparency" min="0" max="100" value="100">
+
+			<div class="vertical-divider"></div>
+
+			<label for="backgroundButton">Bakgrund</label>
+			<button id="backgroundButton" class="style-button"><i class="fas fa-square"></i></button>
+
+			<input type="color" class="color-button" id="backgroundcolorPicker" value="#FFFFFF">
+			<input type="number" id="backgroundsTransparency" min="0" max="100" value="100">
+		</div>
+			
+		</div>
+		<div class="group-box">
+				<h3>Spara</h3>
+		<div class="text-controls">		
+		<button id="saveButton" class="action-button save-btn"><i class="fas fa-save"></i>Spara som PNG</button>
+		 <!-- Spara som PDF-knappen -->
+
+			<div class="vertical-divider"></div>
+			<label for="labelSize">Välj etikettstorlek:</label>
+			<select id="labelSize">
+			  <option value="18x9">18 cm x 9 cm (3per A4)</option>
+			  <option value="16x8">16 cm x 8 cm (3per A4)</option>
+			  <option value="14x7">14 cm x 7 cm (4per A4)</option>
+			  <option value="12x6">12 cm x 6 cm (4per A4)</option> 
+			  <option value="10x5">10 cm x 5 cm (5per A4)</option> 
+			</select>
+        <button id="savePdfButton" class="action-button save-pdf-btn"><i class="fas fa-file-pdf"></i> Spara som A4 PDF</button>
+		<div class="vertical-divider"></div>
+
+		<button id="exportJsonButton" class="action-button">Exportera som JSON</button>
+
+		</div>
+		</div>
+
+
+    </div>
+		<canvas id="myCanvas" width="2000" height="1000"></canvas>
+
+
+    <script>
+		const QRStartX = 1620
+		const QRStartY = 86
+		
+		class QRCode {
+			constructor(name, image) {
+				this.name = name; // Namn på QR-koden
+				this.image = image; // Base64-sträng eller URL för QR-koden
+			}
+		}
+		
+		const qrCodes = {
+			drones2ukraine: new QRCode("drones2ukraine", ''), 
+			blagulabilen: new QRCode("blagulabilen", ''), 
+			nattravn: new QRCode("nattravn", ''), 
+			powerupukraine: new QRCode("powerupukraine", ''), 
+			ukrainahjalpen: new QRCode("ukrainahjalpen", ''), 			
+			operationaid: new QRCode("operationaid", ''), 			
+			svenskkrigare: new QRCode("svenskkrigare", ''), 			
+			swedishresquers: new QRCode("swedishresquers", ''), 			
+			skickavidaretillukraina: new QRCode("skickavidaretillukraina", ''), 						
+			svenskbyborna: new QRCode("svenskbyborna", '')
+		};
+		
+		const beerUrls = {
+			dronarhamnd: 'https://babd87698a.clvaw-cdnwnd.com/7a7c311145e9c02ee96ff83ba2f8f5e9/200000444-7818178183/dronarhamnd.json?ph=babd87698a',
+			blagulaOlen: 'https://babd87698a.clvaw-cdnwnd.com/7a7c311145e9c02ee96ff83ba2f8f5e9/200000445-7d31a7d31c/blagulaOlen.json?ph=babd87698a',
+			gravity: 'https://babd87698a.clvaw-cdnwnd.com/7a7c311145e9c02ee96ff83ba2f8f5e9/200000448-b8b5fb8b60/gravity.json?ph=babd87698a',
+			punchputin: 'https://babd87698a.clvaw-cdnwnd.com/7a7c311145e9c02ee96ff83ba2f8f5e9/200000446-7477274775/punchputin.json?ph=babd87698a',
+			sommarol: 'https://babd87698a.clvaw-cdnwnd.com/7a7c311145e9c02ee96ff83ba2f8f5e9/200000447-d1dced1dd1/sommarolen.json?ph=babd87698a',
+			putinhuilo: 'https://babd87698a.clvaw-cdnwnd.com/7a7c311145e9c02ee96ff83ba2f8f5e9/200000449-62fea62fed/putinhulio.json?ph=babd87698a',
+			redeyes: 'https://babd87698a.clvaw-cdnwnd.com/7a7c311145e9c02ee96ff83ba2f8f5e9/200000450-8631186314/redeyes.json?ph=babd87698a',
+			fromsan: 'https://babd87698a.clvaw-cdnwnd.com/7a7c311145e9c02ee96ff83ba2f8f5e9/200000457-8cef68cefa/fromsan2-4.json?ph=babd87698a',
+			frau: 'https://babd87698a.clvaw-cdnwnd.com/7a7c311145e9c02ee96ff83ba2f8f5e9/200000451-72b4e72b50/frau.json?ph=babd87698a',
+			syla: 'https://babd87698a.clvaw-cdnwnd.com/7a7c311145e9c02ee96ff83ba2f8f5e9/200000453-dd165dd167/syla.json?ph=babd87698a'
+		};
+        const beers = {};
+
+        const canvas = new fabric.Canvas('myCanvas');
+		
+
+function init_beers() {
+    const beerNames = Object.keys(beerUrls); // Get the beer names from the URLs object
+    beerNames.forEach(beerName => {
+        const beerUrl = beerUrls[beerName]; // Get the JSON URL for this beer
+		
+        // Use the existing modal to show the loading status
+        showLoadingModal(`Läser in JSON-fil för ${beerName}...`);
+
+        // Fetch the JSON data for this beer
+        fetch(beerUrl)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Failed to load ${beerName}: ${response.statusText}`);
+                }
+                return response.json(); // Parse the JSON data
+            })
+            .then(data => {
+                beers[beerName] = data; // Add the loaded data to the beers object
+                console.log(`Loaded data for ${beerName}`);
+            })
+            .catch(error => {
+                console.error(`Error loading JSON for ${beerName}:`, error);
+                showLoadingModal(`Fel vid inläsning av ${beerName}.`);
+            });
+    });
+
+    // Optionally, hide the modal after all beers have been loaded
+    hideLoadingModal();
+}
+
+
+
+function drawCanvas(beerDetails) {
+    canvas.clear(); // Rensa canvasen
+
+    // Rita bakgrund
+    fabric.Image.fromURL(beerDetails.background, function(img) {
+        img.scaleToWidth(canvas.width); // Skala bakgrunden för att fylla hela canvasen
+        canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas));
+
+        // Kontrollera att texts är en array innan vi kör forEach
+        if (beerDetails.texts && Array.isArray(beerDetails.texts)) {
+            beerDetails.texts.forEach(text => {
+                const textObj = new fabric.IText(text.text, {
+                    left: text.left,
+                    top: text.top,
+                    fontFamily: text.fontFamily,
+                    fontSize: text.fontSize,
+                    fontWeight: text.fontWeight,
+                    fill: text.fill,
+                    scaleX: text.scaleX,
+                    scaleY: text.scaleY,
+                    angle: text.angle,
+                    opacity: text.opacity,
+                    underline: text.underline,
+                    selectable: true,
+                    editable: true
+                });
+                canvas.add(textObj); // Lägg till texten på canvasen
+            });
+        }
+
+        // Rendera alla objekt
+        canvas.renderAll();
+    });
+}
+
+document.getElementById('templateSelection').addEventListener('change', function () {
+    const selectedBeer = this.value;
+    
+    if (selectedBeer && beers[selectedBeer]) {
+        const beerJson = beers[selectedBeer];
+        
+        // Ladda hela JSON-objektet på canvasen
+        canvas.loadFromJSON(beerJson, function() {
+            canvas.renderAll(); // Rendera canvasen när allt har laddats
+        });
+
+         // Uppdatera QR-kod
+        updateQrCodeForBeer(selectedBeer);
+    }
+});
+
+function resetQrCode() {
+    const existingQrCode = canvas.getObjects().find(obj => obj.name === 'qrCode');
+    
+    if (existingQrCode) {
+        document.getElementById('qrCodeSelection').value = getSelectedQrCode(); // Välj rätt QR-kod i listan
+    }
+}
+
+
+
+
+
+
+        // Sätt zoom till 50% vid laddning
+        canvas.setZoom(0.6);
+
+        // Zoom-funktion
+        canvas.on('mouse:wheel', function(opt) {
+            const delta = opt.e.deltaY;
+            const zoom = canvas.getZoom();
+            const zoomFactor = 0.1; // Justera detta för mer eller mindre zoomning
+            const newZoom = delta > 0 ? zoom - zoomFactor : zoom + zoomFactor; // Justera zoom
+            canvas.setZoom(newZoom);
+            opt.e.preventDefault();
+            opt.e.stopPropagation();
+        });
+
+        // Spara bild
+        document.getElementById('saveButton').addEventListener('click', function() {
+            const currentZoom = canvas.getZoom(); // Spara nuvarande zoom-nivå
+            canvas.setZoom(1); // Temporärt sätt zoom till 100% för att spara bilden
+
+            const image = canvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.href = image;
+            link.download = 'beer_label.png';
+            link.click();
+
+            canvas.setZoom(currentZoom); // Återställ zoom-nivån
+        });
+
+        // Lägg till nytt textobjekt
+        document.getElementById('addTextButton').addEventListener('click', function() {
+            const newText = new fabric.IText("Ny Text", {
+                left: 100,
+                top: 100,
+                fontSize: 30,
+                fill: 'black',
+                selectable: true,
+				editable : true				// Gör den nya texten valbar
+            });
+            canvas.add(newText);
+        });
+
+        // Ta bort valt textobjekt
+        document.getElementById('removeTextButton').addEventListener('click', function() {
+            const activeObject = canvas.getActiveObject();
+            if (activeObject && activeObject.type === 'i-text') {
+                canvas.remove(activeObject); // Ta bort det valda textobjektet
+            } else {
+                alert("Vänligen välj en text att ta bort.");
+            }
+        });
+
+
+document.getElementById('qrCodeSelection').addEventListener('change', function() {
+    const selectedQrCode = this.value;
+    const existingQrCode = canvas.getObjects().find(obj => obj.name === 'qrCode');
+    
+    if (selectedQrCode && existingQrCode) {
+        // Uppdatera den befintliga QR-koden om den finns
+        existingQrCode.setSrc(qrCodes[selectedQrCode].image, function() {
+            canvas.renderAll(); // Rendera om canvasen efter uppdatering
+        });
+    }
+});
+
+
+
+
+
+
+
+
+
+//Hantera fonterna// Event när ett textobjekt väljs
+canvas.on('selection:created', function(event) {
+    const selectedObject = canvas.getActiveObject();
+    if (selectedObject && selectedObject.type === 'i-text') {
+        updateFontGui(selectedObject);
+        updateAlignButtonIcon(selectedObject.textAlign || 'left'); // Uppdatera ikonen baserat på vald texts justering
+    } else {
+        resetFontGui();
+    }
+});
+
+canvas.on('selection:updated', function(event) {
+    const selectedObject = canvas.getActiveObject();
+    if (selectedObject && selectedObject.type === 'i-text') {
+        updateFontGui(selectedObject);
+        updateAlignButtonIcon(selectedObject.textAlign || 'left'); // Uppdatera ikonen baserat på vald texts justering
+    } else {
+        resetFontGui();
+    }
+});
+
+canvas.on('selection:cleared', function() {
+    resetFontGui(); // Nollställ GUI-fälten när ingen text är vald
+    updateAlignButtonIcon('left'); // Sätt justeringsknappen till vänster som standard
+});
+
+	function resetStyleButtons() {
+		document.getElementById('boldButton').classList.remove('active');
+		document.getElementById('italicButton').classList.remove('active');
+		document.getElementById('underlineButton').classList.remove('active');
+		document.getElementById('backgroundButton').classList.remove('active'); // Kryssrutan avmarkerad
+		
+	}
+
+// Funktion för att nollställa GUI-fälten
+function resetFontGui() {
+    document.getElementById('fontSelector').value = ''; // Tomt eller default värde
+    document.getElementById('fontSize').value = ''; // Tomt värde
+    document.getElementById('colorPicker').value = '#000000'; // Standard färg
+	resetStyleButtons();
+}
+
+// Funktion för att uppdatera GUI-fälten med textobjektets egenskaper
+// Funktion för att uppdatera GUI-fälten med textobjektets egenskaper
+function updateFontGui(selectedObject) {
+    if (selectedObject && selectedObject.type === 'i-text') {
+        // Uppdatera typsnitt och storlek
+        document.getElementById('fontSelector').value = selectedObject.fontFamily || 'Arial';
+        document.getElementById('fontSize').value = selectedObject.fontSize || 20;
+
+        // Uppdatera färg för text (utan alfa)
+        const fillColor = selectedObject.fill || '#000000'; // Standard svart om ingen färg finns
+        const rgbColor = extractRgb(fillColor); // Extrahera RGB-färgen utan alfa
+        document.getElementById('colorPicker').value = rgbToHex(rgbColor); // Endast färg (RGB utan alfa)
+
+        // Uppdatera transparens för textfärg
+        const alpha = extractAlpha(fillColor); // Extrahera alfa-komponenten
+        document.getElementById('transparency').value = alpha * 100; // Sätt transparens i 100-skala
+
+        // Uppdatera bakgrundsfärg (utan alfa) och transparens
+        if (selectedObject.textBackgroundColor) {
+            const bgColor = selectedObject.textBackgroundColor;
+            const bgRgbColor = extractRgb(bgColor); // Extrahera RGB-färg utan alfa
+            document.getElementById('backgroundcolorPicker').value = rgbToHex(bgRgbColor); // Endast bakgrundsfärgen (RGB utan alfa)
+
+            const bgAlpha = extractAlpha(bgColor); // Extrahera alfa-komponenten
+            document.getElementById('backgroundsTransparency').value = bgAlpha * 100; // Sätt transparens för bakgrund
+        } else {
+            document.getElementById('backgroundcolorPicker').value = '#FFFFFF'; // Standard vit bakgrund
+            document.getElementById('backgroundsTransparency').value = 100; // Standard full opacitet
+        }
+
+        // Uppdatera stilknappar (fet, kursiv, understruken)
+        updateStyleButtons(selectedObject);
+
+        // Uppdatera textjustering (centrering, vänster, höger, fullbredd)
+        updateAlignButtonIcon(selectedObject.textAlign || 'left');
+
+        // Uppdatera bakgrundsknappen (om bakgrundsfärg är satt)
+        if (selectedObject.textBackgroundColor) {
+            document.getElementById('backgroundButton').classList.add('active');
+        } else {
+            document.getElementById('backgroundButton').classList.remove('active');
+        }
+    } else {
+        // Om inget textobjekt är valt, återställ GUI:t
+        resetFontGui();
+    }
+}
+
+// Funktion för att uppdatera stilknapparna (fet, kursiv, understruken)
+function updateStyleButtons(selectedObject) {
+    if (selectedObject && selectedObject.type === 'i-text') {
+        // Uppdatera knappen för Fet
+        if (selectedObject.fontWeight === 'bold') {
+            document.getElementById('boldButton').classList.add('active');
+        } else {
+            document.getElementById('boldButton').classList.remove('active');
+        }
+
+        // Uppdatera knappen för Kursiv
+        if (selectedObject.fontStyle === 'italic') {
+            document.getElementById('italicButton').classList.add('active');
+        } else {
+            document.getElementById('italicButton').classList.remove('active');
+        }
+
+        // Uppdatera knappen för Understruken
+        if (selectedObject.underline) {
+            document.getElementById('underlineButton').classList.add('active');
+        } else {
+            document.getElementById('underlineButton').classList.remove('active');
+        }
+    }
+}
+// Funktion för att uppdatera justeringsikonen (vänster, center, höger, justify)
+function updateAlignButtonIcon(textAlign) {
+    const alignButton = document.getElementById('alignButton');
+
+    // Ta bort alla befintliga klasser på ikonen
+    alignButton.classList.remove('fa-align-left', 'fa-align-center', 'fa-align-right', 'fa-align-justify');
+
+    // Lägg till rätt klass baserat på textjusteringen
+    if (textAlign === 'left') {
+        alignButton.classList.add('fa-align-left');
+    } else if (textAlign === 'center') {
+        alignButton.classList.add('fa-align-center');
+    } else if (textAlign === 'right') {
+        alignButton.classList.add('fa-align-right');
+    } else if (textAlign === 'justify') {
+        alignButton.classList.add('fa-align-justify');
+    }
+}
+
+
+// Funktion för att extrahera RGB från en färgsträng (hanterar både rgb och rgba)
+function extractRgb(color) {
+    if (color.includes('rgba')) {
+        return color.match(/rgba?\((\d+), (\d+), (\d+),?/).slice(1, 4).join(',');
+    } else if (color.includes('rgb')) {
+        return color.match(/rgb\((\d+), (\d+), (\d+)\)/).slice(1, 4).join(',');
+    }
+    return color; // Returnera färgen som den är om den redan är i hex
+}
+
+// Funktion för att extrahera alfa från en färgsträng (returnerar 1 om ingen alfa finns)
+function extractAlpha(color) {
+    if (color.includes('rgba')) {
+        return parseFloat(color.match(/rgba?\((\d+), (\d+), (\d+),? ?([\d.]+)?\)/)[4]) || 1;
+    }
+    return 1; // Om det inte finns någon alfa, returnera 1 (ingen transparens)
+}
+
+
+// Hjälpfunktion för att konvertera RGBA till HEX
+function rgbaToHex(rgba) {
+    const rgbaParts = rgba.match(/\d+/g);
+    const r = parseInt(rgbaParts[0]);
+    const g = parseInt(rgbaParts[1]);
+    const b = parseInt(rgbaParts[2]);
+    return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
+}
+function rgbToHex(rgb) {
+    if (!rgb || typeof rgb !== 'string') {
+        console.error('Ogiltig färgsträng:', rgb);
+        return '#000000'; // Fallback till svart om färgsträngen inte är giltig
+    }
+
+    const rgbArray = rgb.match(/\d+/g);
+    if (!rgbArray) {
+        console.error('Kunde inte matcha RGB-värden i färgsträng:', rgb);
+        return '#000000'; // Fallback till svart om ingen korrekt matchning hittas
+    }
+
+    const hex = rgbArray.map(x => {
+        const hexValue = parseInt(x).toString(16);
+        return hexValue.length === 1 ? '0' + hexValue : hexValue;
+    });
+
+    return '#' + hex.join('');
+}
+
+
+// Event för att ändra typsnitt
+document.getElementById('fontSelector').addEventListener('change', function() {
+    const activeObject = canvas.getActiveObject();
+    if (activeObject && activeObject.type === 'i-text') {
+        activeObject.set('fontFamily', this.value);
+        canvas.renderAll();
+    }
+});
+
+// Event för att ändra typsnittsstorlek
+document.getElementById('fontSize').addEventListener('input', function() {
+    const activeObject = canvas.getActiveObject();
+    if (activeObject && activeObject.type === 'i-text') {
+        activeObject.set('fontSize', parseInt(this.value, 10));
+        canvas.renderAll();
+    }
+});
+
+// Event för att ändra färg
+document.getElementById('colorPicker').addEventListener('input', function() {
+    const activeObject = canvas.getActiveObject();
+    if (activeObject && activeObject.type === 'i-text') {
+        const currentAlpha = document.getElementById('transparency').value / 100 || 1; // Hämta alfa eller använd 1 om inget värde finns
+        const color = this.value; // Få den valda färgen
+
+        // Kombinera färg med alfa och uppdatera
+        activeObject.set('fill', `rgba(${parseInt(color.slice(1, 3), 16)}, ${parseInt(color.slice(3, 5), 16)}, ${parseInt(color.slice(5, 7), 16)}, ${currentAlpha})`);
+        canvas.renderAll();
+    }
+});
+
+
+
+document.getElementById('boldButton').addEventListener('click', function() {
+    this.classList.toggle('active');
+    const isBold = this.classList.contains('active');
+    const activeObject = canvas.getActiveObject();
+    if (activeObject && activeObject.type === 'i-text') {
+        activeObject.set('fontWeight', isBold ? 'bold' : 'normal');
+        canvas.renderAll();
+    }
+});
+
+document.getElementById('italicButton').addEventListener('click', function() {
+    this.classList.toggle('active');
+    const isItalic = this.classList.contains('active');
+    // Här kan du lägga till din Fabric.js-logik för att sätta text till kursiv
+	const activeObject = canvas.getActiveObject();
+		if (activeObject && activeObject.type === 'i-text') {
+			activeObject.set('fontStyle', isItalic ? 'italic' : 'normal');
+			canvas.renderAll();
+		}	
+});
+
+document.getElementById('underlineButton').addEventListener('click', function() {
+    this.classList.toggle('active');
+    const isUnderline = this.classList.contains('active');
+    const activeObject = canvas.getActiveObject();
+    if (activeObject && activeObject.type === 'i-text') {
+        activeObject.set('underline', isUnderline ? 'underline' : ''); // Uppdatera underline egenskapen
+        canvas.renderAll();
+    }
+});
+
+// Kod för att hantera text align
+// Lista över tillgängliga justeringslägen och ikoner
+const alignOptions = ['left', 'center', 'right', 'justify'];
+const alignIcons = ['fa-align-left', 'fa-align-center', 'fa-align-right', 'fa-align-justify'];
+
+let currentAlignIndex = 0; // Håll koll på nuvarande justeringsläge
+
+// Funktion för att uppdatera textjusteringen
+document.getElementById('alignButton').addEventListener('click', function() {
+    const activeObject = canvas.getActiveObject();
+    if (activeObject && activeObject.type === 'i-text') {
+        // Byt till nästa justeringsläge
+        currentAlignIndex = (currentAlignIndex + 1) % alignOptions.length;
+        const newAlign = alignOptions[currentAlignIndex];
+        
+        // Uppdatera textjusteringen för det valda textobjektet
+        activeObject.set('textAlign', newAlign);
+        canvas.renderAll();
+
+        // Uppdatera ikonen på knappen
+        updateAlignButtonIcon(newAlign);
+    }
+});
+
+// Funktion för att uppdatera ikonen baserat på justering
+function updateAlignButtonIcon(align) {
+    const alignButton = document.getElementById('alignButton');
+    alignButton.querySelector('i').className = ''; // Ta bort befintlig ikonklass
+    const newIcon = alignIcons[alignOptions.indexOf(align)];
+    alignButton.querySelector('i').classList.add('fas', newIcon); // Lägg till den nya ikonen
+}
+
+
+
+// Event för att ändra transparens
+document.getElementById('transparency').addEventListener('input', function() {
+    const activeObject = canvas.getActiveObject();
+    if (activeObject && activeObject.type === 'i-text') {
+        const color = document.getElementById('colorPicker').value; 
+        const alpha = this.value / 100; 
+        activeObject.set('fill', `rgba(${parseInt(color.slice(1, 3), 16)}, ${parseInt(color.slice(3, 5), 16)}, ${parseInt(color.slice(5, 7), 16)}, ${alpha})`);
+        canvas.renderAll();
+    }
+});
+
+// Event för att hantera bakgrund
+document.getElementById('backgroundButton').addEventListener('click', function() {
+    this.classList.toggle('active'); // Toggla active-klassen på knappen
+    const activeObject = canvas.getActiveObject();
+    
+    if (activeObject && activeObject.type === 'i-text') {
+        if (this.classList.contains('active')) {
+            // Om knappen är aktiv, sätt en standardbakgrundsfärg om ingen färg är vald
+            const currentColor = document.getElementById('backgroundcolorPicker').value || '#ffffff'; // Default vit bakgrund
+            activeObject.set('textBackgroundColor', currentColor); // Sätt bakgrundsfärgen
+        } else {
+            // Om knappen inte är aktiv, ta bort bakgrundsfärgen
+            activeObject.set('textBackgroundColor', '');
+        }
+        canvas.renderAll();
+    }
+});
+
+
+// Event för att ändra bakgrundsfärg
+document.getElementById('backgroundcolorPicker').addEventListener('input', function() {
+    const activeObject = canvas.getActiveObject();
+    if (activeObject && activeObject.type === 'i-text') {
+        const alpha = document.getElementById('backgroundsTransparency').value / 100; // Få transparensvärdet
+        const bgColor = this.value; // Hämta bakgrundsfärgen
+
+        // Sätt bakgrundsfärgen med transparens
+        activeObject.set('textBackgroundColor', `rgba(${parseInt(bgColor.slice(1, 3), 16)}, ${parseInt(bgColor.slice(3, 5), 16)}, ${parseInt(bgColor.slice(5, 7), 16)}, ${alpha})`);
+        canvas.renderAll();
+    }
+});
+
+
+
+
+		// Event för att hantera bakgrundstransparens
+		document.getElementById('backgroundsTransparency').addEventListener('input', function() {
+			const activeObject = canvas.getActiveObject();
+			if (activeObject && activeObject.type === 'i-text') {
+				const bgColor = document.getElementById('backgroundcolorPicker').value; // Få bakgrundsfärgen
+				const alpha = this.value / 100; // Få transparensvärdet
+
+				// Sätt bakgrundsfärgen med transparens
+				activeObject.set('textBackgroundColor', `rgba(${parseInt(bgColor.slice(1, 3), 16)}, ${parseInt(bgColor.slice(3, 5), 16)}, ${parseInt(bgColor.slice(5, 7), 16)}, ${alpha})`);
+				canvas.renderAll();
+			}
+		});
+
+
+
+		// När användaren klickar på knappen, öppna filuppladdningsdialogen
+		document.getElementById('uploadImageButton').addEventListener('click', function() {
+			document.getElementById('imageUpload').click();
+		});
+
+// När en fil har valts
+document.getElementById('imageUpload').addEventListener('change', function(event) {
+    const file = event.target.files[0];
+    if (file && (file.type === 'image/png' || file.type === 'image/jpeg')) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            const imageDataUrl = e.target.result; // Base64-sträng
+            
+            // Nu använder vi imageDataUrl säkert
+            fabric.Image.fromURL(imageDataUrl, function(img) {
+                // Kontrollera proportionerna och skala antingen baserat på bredd eller höjd
+                const canvasAspect = canvas.width / canvas.height;
+                const imgAspect = img.width / img.height;
+
+                if (imgAspect > canvasAspect) {
+                    img.scaleToWidth(canvas.width); // Skala till canvasens bredd om bilden är bredare
+                } else {
+                    img.scaleToHeight(canvas.height); // Skala till canvasens höjd om bilden är högre
+                }
+
+                // Sätt som bakgrund och rendera canvasen
+                canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas));
+            });
+        };
+
+        // Läs filen som en Base64-sträng
+        reader.readAsDataURL(file); 
+    } else {
+        alert("Vänligen ladda upp en PNG eller JPG/JPEG-bild.");
+    }
+});
+
+//Spara som PDF
+// Kontrollera att jsPDF är tillgängligt från fönstret (window)
+const { jsPDF } = window.jspdf;
+document.getElementById('savePdfButton').addEventListener('click', function() {
+    const fabricCanvas = canvas; // Hämta fabric-instansen av canvas
+
+    // Steg 1: Hämta valt etikettstorlek
+    const selectedSize = document.getElementById('labelSize').value; // Hämta användarens val
+    let imgWidth, imgHeight;
+
+    // Justera bredd och höjd baserat på användarens val
+    if (selectedSize === "18x9") {
+        imgWidth = 180;
+        imgHeight = 90;
+    } else if (selectedSize === "16x8") {
+        imgWidth = 160;
+        imgHeight = 80;
+    } else if (selectedSize === "14x7") {
+        imgWidth = 140;
+        imgHeight = 70;
+    } else if (selectedSize === "12x6") {
+        imgWidth = 120;
+        imgHeight = 60;
+    } else if (selectedSize === "10x5") {
+        imgWidth = 100;
+        imgHeight = 50;
+    }
+
+    const pageWidth = 210; // A4 bredd i mm
+    const availableHeight = 297; // A4 höjd i mm
+    const margin = 2; // Marginal mellan etiketterna
+
+    // Räkna ut det totala utrymmet som etiketterna kommer ta upp (inklusive marginaler)
+    let etiketterPerSida = Math.floor((availableHeight - margin) / (imgHeight + margin));
+    const totalEtikettHojd = etiketterPerSida * imgHeight + (etiketterPerSida - 1) * margin;
+
+    // Räkna ut det lediga utrymmet ovanför och under etiketterna
+    let yPosition = (availableHeight - totalEtikettHojd) / 2; // Centrera i höjdled
+
+    // Steg 2: Tillfälligt öka canvasens storlek till 100% (2000x1000px) och rensa selekterade objekt
+    const originalZoom = fabricCanvas.getZoom(); // Spara den nuvarande zoomnivån
+    const activeObject = fabricCanvas.getActiveObject(); // Spara aktivt objekt om det finns
+    fabricCanvas.discardActiveObject(); // Avmarkera alla objekt
+    fabricCanvas.setZoom(1); // Sätt zoom till 100%
+    fabricCanvas.renderAll(); // Rendera om canvasen utan valda objekt
+
+    // Använd html2canvas för att konvertera canvas till en bild
+    html2canvas(fabricCanvas.wrapperEl).then(function(canvas) {
+        const imgData = canvas.toDataURL('image/png'); // Konvertera canvas till PNG
+
+        // Skapa ett nytt PDF-dokument med jsPDF
+        const pdf = new jsPDF('portrait', 'mm', 'a4');
+
+        // Loop för att lägga till etiketter baserat på storlek och tillgängligt utrymme
+        for (let i = 0; i < etiketterPerSida; i++) {
+            // Lägg till etiketten på rätt plats
+            pdf.addImage(imgData, 'PNG', (pageWidth - imgWidth) / 2, yPosition, imgWidth, imgHeight);
+
+            // Justera y-position för nästa etikett
+            yPosition += imgHeight + margin;
+        }
+
+        // Spara PDF-filen
+        pdf.save('etiketter.pdf');
+
+        // Återställ canvasen till ursprunglig zoom och selekterade objekt
+        fabricCanvas.setZoom(originalZoom); // Återställ zoom
+        if (activeObject) {
+            fabricCanvas.setActiveObject(activeObject); // Återställ valda objekt om det finns
+        }
+        fabricCanvas.renderAll(); // Rendera om canvasen
+    }).catch(function(error) {
+        console.error("Ett fel inträffade när PDF genererades:", error);
+    });
+});
+
+
+document.getElementById('exportJsonButton').addEventListener('click', function() {
+    // Hämta hela canvasens JSON-data
+    const canvasData = canvas.toJSON();
+
+    // Omvandla JSON-objektet till en sträng för enkel kopiering
+    const jsonString = JSON.stringify(canvasData, null, 2); // 2 ger bättre formatering
+
+    // Visa JSON-strängen för att enkelt kopiera
+    console.log(jsonString);
+
+    // Skapa ett nedladdningsbart JSON-dokument
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'canvas_data.json';  // Filnamn för den exporterade JSON-filen
+    link.click();
+});
+
+
+
+canvas.on('object:modified', function(e) {
+    let obj = e.target;
+
+    if (obj.left < 0) {
+        obj.set({ left: 0 });
+    }
+    if (obj.top < 0) {
+        obj.set({ top: 0 });
+    }
+    if (obj.left + obj.width * obj.scaleX > canvas.width) {
+        obj.set({ left: canvas.width - obj.width * obj.scaleX });
+    }
+    if (obj.top + obj.height * obj.scaleY > canvas.height) {
+        obj.set({ top: canvas.height - obj.height * obj.scaleY });
+    }
+
+    canvas.renderAll();
+});
+function drawCanvasBorder() {
+    const border = new fabric.Rect({
+        left: 0,
+        top: 0,
+        width: canvas.width,
+        height: canvas.height,
+        stroke: 'black', // Färgen på ramen
+        strokeWidth: 2, // Tjockleken på ramen
+        fill: 'transparent', // Ingen fyllning
+        selectable: false, // Gör ramen ej valbar
+        evented: false // Stäng av alla händelser på ramen
+    });
+    canvas.add(border);
+    canvas.sendToBack(border); // Skicka ramen till botten av stacken
+}
+
+// Funktion för att visa modalen
+function showLoadingModal(message) {
+    document.getElementById('loadingModal').style.display = 'flex'; // Visa modalen
+    document.getElementById('loadingText').innerText = message; // Uppdatera texten
+}
+
+// Funktion för att dölja modalen
+function hideLoadingModal() {
+    document.getElementById('loadingModal').style.display = 'none'; // Dölj modalen
+}
+
+
+function loadBase64FromUrl(url, imageName) {
+    return new Promise((resolve, reject) => {
+        showLoadingModal(`Laddar in: ${imageName}`);
+
+        const img = new Image();
+        img.crossOrigin = 'Anonymous';  // Viktigt om bilderna ligger på olika domäner
+        img.onload = function() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+            const dataURL = canvas.toDataURL('image/png');
+            resolve(dataURL);  // Returnera base64-strängen
+        };
+        img.onerror = function() {
+            reject(`Fel vid laddning av: ${imageName}`);
+        };
+        img.src = url;
+    });
+}
+
+function updateQrCodeForBeer(selectedBeer) {
+    const qrCodeSelection = document.getElementById('qrCodeSelection');
+    
+    // Hämta den förvalda QR-koden för den valda ölen
+    const qrCodeForBeer = beers[selectedBeer].objects.find(obj => obj.name === 'qrCode');
+    
+    if (qrCodeForBeer && qrCodeForBeer.src) {
+        // Sätt rätt värde i dropdown-listan för QR-kod baserat på den valda ölen
+        const matchingQrCodeKey = Object.keys(qrCodes).find(key => qrCodes[key].image === qrCodeForBeer.src);
+        if (matchingQrCodeKey) {
+            qrCodeSelection.value = matchingQrCodeKey;
+        }
+        
+        // Hämta det existerande QR-kodsobjektet från canvasen
+        const existingQrCode = canvas.getObjects().find(obj => obj.name === 'qrCode');
+        
+        if (existingQrCode) {
+            // Om QR-kodsobjektet redan finns, uppdatera dess källa
+            existingQrCode.setSrc(qrCodes[matchingQrCodeKey].image, function() {
+                canvas.renderAll(); // Rendera om canvasen efter uppdatering
+            });
+        } else {
+            // Om inget QR-kodsobjekt finns, skapa ett nytt
+            fabric.Image.fromURL(qrCodes[matchingQrCodeKey].image, function(img) {
+                img.set({
+                    left: QRStartX,
+                    top: QRStartY,
+                    selectable: true,
+                    name: 'qrCode'
+                });
+                canvas.add(img);
+                canvas.renderAll(); // Rendera om canvasen med QR-koden
+            });
+        }
+    } else {
+        // Återställ om ingen QR-kod finns för ölen
+        resetQrCode();
+    }
+}
+
+
+
+// Funktion för att initiera bilder
+function init_images() {
+    return new Promise(async (resolve, reject) => {
+        try {
+
+			//QR koder
+
+			const qrDrones2Ukraine = await loadBase64FromUrl('https://babd87698a.clvaw-cdnwnd.com/7a7c311145e9c02ee96ff83ba2f8f5e9/200000384-026b1026b3/1.png?ph=babd87698a', 'Drones2Ukraine');
+            qrCodes.drones2ukraine.image = qrDrones2Ukraine;
+            console.log('QR-kod för drones2ukraine laddad');
+
+			const qrblagulabilen = await loadBase64FromUrl('https://babd87698a.clvaw-cdnwnd.com/7a7c311145e9c02ee96ff83ba2f8f5e9/200000386-82a2482a26/2.png?ph=babd87698a', 'Blågula Bilen');
+            qrCodes.blagulabilen.image = qrblagulabilen;
+            console.log('QR-kod för blagulabilen laddad');
+
+			const qrnattravn = await loadBase64FromUrl('https://babd87698a.clvaw-cdnwnd.com/7a7c311145e9c02ee96ff83ba2f8f5e9/200000388-9d6159d617/3.png?ph=babd87698a', 'Projekt Nattravn');
+            qrCodes.nattravn.image = qrnattravn;
+            console.log('QR-kod för nattravn laddad');
+
+			const qrpowerupukraine = await loadBase64FromUrl('https://babd87698a.clvaw-cdnwnd.com/7a7c311145e9c02ee96ff83ba2f8f5e9/200000390-3b09a3b09c/4.png?ph=babd87698a', 'Power Up Ukraine');
+            qrCodes.powerupukraine.image = qrpowerupukraine;
+            console.log('QR-kod för powerupukraine laddad');
+
+			const qrukrainahjalpen = await loadBase64FromUrl('https://babd87698a.clvaw-cdnwnd.com/7a7c311145e9c02ee96ff83ba2f8f5e9/200000392-9039e903a0/5.png?ph=babd87698a', 'Ukraina Hjälpen');
+            qrCodes.ukrainahjalpen.image = qrukrainahjalpen;
+            console.log('QR-kod för ukrainahjalpen laddad');
+
+			const qroperationaid = await loadBase64FromUrl('https://babd87698a.clvaw-cdnwnd.com/7a7c311145e9c02ee96ff83ba2f8f5e9/200000398-6f48b6f48c/6.png?ph=babd87698a', 'Operation Aid');
+            qrCodes.operationaid.image = qroperationaid;
+            console.log('QR-kod för operationaid laddad');
+			
+			const qrsvenskkrigare = await loadBase64FromUrl('https://babd87698a.clvaw-cdnwnd.com/7a7c311145e9c02ee96ff83ba2f8f5e9/200000394-17ffa17ffb/7.png?ph=babd87698a', 'Svensk Krigare');
+            qrCodes.svenskkrigare.image = qrsvenskkrigare;
+            console.log('QR-kod för svenskkrigare laddad');
+			
+			const qrswedishresquers = await loadBase64FromUrl('https://babd87698a.clvaw-cdnwnd.com/7a7c311145e9c02ee96ff83ba2f8f5e9/200000396-0c2d10c2d3/8.png?ph=babd87698a', 'Swedish Rescuers');
+            qrCodes.swedishresquers.image = qrswedishresquers;
+            console.log('QR-kod för swedishresquers laddad');
+									
+			const qrskickavidaretillukraina = await loadBase64FromUrl('https://babd87698a.clvaw-cdnwnd.com/7a7c311145e9c02ee96ff83ba2f8f5e9/200000400-5996e59971/9.png?ph=babd87698a', 'Skicka Vidare Till Ukraina');
+            qrCodes.skickavidaretillukraina.image = qrskickavidaretillukraina;
+            console.log('QR-kod för skickavidaretillukraina laddad');
+
+			const qrsvenskbyborna = await loadBase64FromUrl('https://babd87698a.clvaw-cdnwnd.com/7a7c311145e9c02ee96ff83ba2f8f5e9/200000402-16e9316e95/10.png?ph=babd87698a', 'Svenskbyborna');
+            qrCodes.svenskbyborna.image = qrsvenskbyborna;
+            console.log('QR-kod för svenskbyborna laddad');
+		
+            // Ladda alla etikett bakgrunder
+            const blagulaOlenBackground = await loadBase64FromUrl('https://babd87698a.clvaw-cdnwnd.com/7a7c311145e9c02ee96ff83ba2f8f5e9/200000378-bc27fbc281/blagulaolenbg.png?ph=babd87698a', 'Blågula Ölen');
+            beers.blagulaOlen.backgroundImage.src = blagulaOlenBackground;
+			beers.blagulaOlen.objects.find(obj => obj.name === 'qrCode').src = qrblagulabilen;
+            console.log('Bakgrundsbild för Blagula Ölen laddad');
+
+            const punchputinBackground = await loadBase64FromUrl('https://babd87698a.clvaw-cdnwnd.com/7a7c311145e9c02ee96ff83ba2f8f5e9/200000380-61cdc61cde/punchputin.png?ph=babd87698a', 'Punch Putin with a SMASH!');
+            beers.punchputin.backgroundImage.src = punchputinBackground;
+			beers.punchputin.objects.find(obj => obj.name === 'qrCode').src = qrsvenskkrigare;
+            console.log('Bakgrundsbild för Punch Putin laddad');
+
+            const dronarhamndBackground = await loadBase64FromUrl('https://babd87698a.clvaw-cdnwnd.com/7a7c311145e9c02ee96ff83ba2f8f5e9/200000382-f0839f083a/Dr%C3%B6narh%C3%A4mndtom.png?ph=babd87698a','Drönarhämnd');
+            beers.dronarhamnd.backgroundImage.src = dronarhamndBackground;
+			beers.dronarhamnd.objects.find(obj => obj.name === 'qrCode').src = qrnattravn;
+            console.log('Bakgrundsbild för Drönarhämnd laddad');
+
+            const sommarolBackground = await loadBase64FromUrl('https://babd87698a.clvaw-cdnwnd.com/7a7c311145e9c02ee96ff83ba2f8f5e9/200000404-3f2ca3f2cc/sommar%C3%B6l.png?ph=babd87698a','Sommarölen');
+            beers.sommarol.backgroundImage.src = sommarolBackground;
+			beers.sommarol.objects.find(obj => obj.name === 'qrCode').src = qrblagulabilen;
+            console.log('Bakgrundsbild för Sommarölen laddad');
+
+            const gravityBackground = await loadBase64FromUrl('https://babd87698a.clvaw-cdnwnd.com/7a7c311145e9c02ee96ff83ba2f8f5e9/200000410-b0445b0448/gravity.png?ph=babd87698a','GRAVITY');
+            beers.gravity.backgroundImage.src = gravityBackground;
+			beers.gravity.objects.find(obj => obj.name === 'qrCode').src = qrnattravn;
+            console.log('Bakgrundsbild för GRAVITY laddad');
+
+            const putinhuiloBackground = await loadBase64FromUrl('https://babd87698a.clvaw-cdnwnd.com/7a7c311145e9c02ee96ff83ba2f8f5e9/200000412-f2bfff2c01/putinhuylo.png?ph=babd87698a','Putin Huilo');
+            beers.putinhuilo.backgroundImage.src = putinhuiloBackground;
+			beers.putinhuilo.objects.find(obj => obj.name === 'qrCode').src = qrukrainahjalpen;
+            console.log('Bakgrundsbild för Putin Huilo laddad');
+			
+            const redeyesBackground = await loadBase64FromUrl('https://babd87698a.clvaw-cdnwnd.com/7a7c311145e9c02ee96ff83ba2f8f5e9/200000414-bb333bb334/REDEYES.png?ph=babd87698a', 'Red Eyes');
+			beers.redeyes.backgroundImage.src = redeyesBackground;
+			beers.redeyes.objects.find(obj => obj.name === 'qrCode').src = qrpowerupukraine;
+            console.log('Bakgrundsbild för Red Eyes laddad');
+
+            const fromsanBackground = await loadBase64FromUrl('https://babd87698a.clvaw-cdnwnd.com/7a7c311145e9c02ee96ff83ba2f8f5e9/200000420-0004300045/fromdon-5.png?ph=babd87698a', 'From San to Don');
+            beers.fromsan.backgroundImage.src = fromsanBackground;
+			beers.fromsan.objects.find(obj => obj.name === 'qrCode').src = qrsvenskbyborna;
+            console.log('Bakgrundsbild för From San to Don laddad');						
+
+            const frauBackground = await loadBase64FromUrl('https://babd87698a.clvaw-cdnwnd.com/7a7c311145e9c02ee96ff83ba2f8f5e9/200000416-053580535a/frau.png?ph=babd87698a', 'Frau Ribbentrop');
+            beers.frau.backgroundImage.src = frauBackground;
+			beers.frau.objects.find(obj => obj.name === 'qrCode').src = qrswedishresquers;
+            console.log('Bakgrundsbild för Frau Ribbentrop laddad');						
+
+            const sylaBackground = await loadBase64FromUrl('https://babd87698a.clvaw-cdnwnd.com/7a7c311145e9c02ee96ff83ba2f8f5e9/200000422-ce0e3ce0e6/sylabg.png?ph=babd87698a', 'Syla');
+            beers.syla.backgroundImage.src = sylaBackground;
+			beers.syla.objects.find(obj => obj.name === 'qrCode').src = qrskickavidaretillukraina;
+            console.log('Bakgrundsbild för Syla laddad');						
+
+
+            hideLoadingModal(); // Dölj modalen när alla bilder är laddade
+            // När alla bilder är laddade, lös promisen
+            resolve();
+        } catch (error) {
+            hideLoadingModal(); // Dölj modalen vid fel
+            console.error(error);  // Skriv ut fel i konsollen
+            showLoadingModal(error); // Visa felmeddelandet i modalen
+            reject(error);
+        }
+    });
+}
+
+//Pixa
+function searchPixabay(query) {
+    const apiKey = '46529806-e05a4c6183301481b18ac2b97'; // Din API-nyckel
+    const url = `https://pixabay.com/api/?key=${apiKey}&q=${encodeURIComponent(query)}&image_type=photo&orientation=horizontal&safesearch=true&per_page=32`;
+
+    return fetch(url)
+        .then(response => {
+            if (!response.ok) {
+                console.error(`API-fel: ${response.status} - ${response.statusText}`);
+                throw new Error(`API-fel: ${response.status} - ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.totalHits === 0) {
+                console.warn('Inga bilder hittades för denna sökning.');
+                throw new Error('Inga bilder hittades.');
+            }
+            return data.hits; // Returnera arrayen med bildresultat
+        })
+        .catch(error => {
+            console.error('Ett fel inträffade vid API-anropet:', error.message, error);
+            alert('Ett fel inträffade under bildsökningen. Försök igen senare.');
+        });
+}
+function showPixabayModal() {
+    const modal = document.createElement('div');
+    modal.classList.add('pixabay-modal');
+
+    modal.innerHTML = `
+        <div class="pixabay-modal-content">
+            <span class="close-button" onclick="closePixabayModal()">&times;</span>
+            <input type="text" id="pixabaySearchInput" placeholder="Sök efter bakgrundsbild...">
+            <button id="pixabaySearchButtonInner">Sök</button>
+            <div id="pixabayResults" class="pixabay-results"></div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+    modal.style.display = 'flex'; // Visa modalen
+
+    // Lägg till sökfunktionalitet på sökknappen
+    document.getElementById('pixabaySearchButtonInner').addEventListener('click', performPixabaySearch);
+}
+function performPixabaySearch() {
+    const query = document.getElementById('pixabaySearchInput').value;
+
+    if (!query) {
+        alert('Var vänlig och skriv in ett sökord för att hitta bilder.');
+        return;
+    }
+
+    searchPixabay(query).then(images => {
+        const resultsDiv = document.getElementById('pixabayResults');
+        resultsDiv.innerHTML = ''; // Rensa tidigare resultat
+
+        if (!images || images.length === 0) {
+            resultsDiv.innerHTML = '<p>Inga bilder hittades för denna sökning.</p>';
+            return;
+        }
+
+        images.forEach(image => {
+            const imgElement = document.createElement('img');
+            imgElement.src = image.previewURL; // Visa bildförhandsvisningen
+            imgElement.classList.add('pixabay-result');
+            imgElement.setAttribute('data-image-url', image.largeImageURL); // Lagra stora bildens URL
+
+            // Lägg till klickhändelse för att välja bild
+            imgElement.addEventListener('click', function() {
+                const selectedImageUrl = this.getAttribute('data-image-url');
+                setBackgroundImageToCanvas(selectedImageUrl);
+                closePixabayModal(); // Stäng modalen efter att användaren valt en bild
+            });
+
+            resultsDiv.appendChild(imgElement);
+        });
+    }).catch(() => {
+        const resultsDiv = document.getElementById('pixabayResults');
+        resultsDiv.innerHTML = '<p>Ett fel inträffade under bildsökningen. Försök igen senare.</p>';
+    });
+}
+
+function setBackgroundImageToCanvas(imageUrl) {
+    // Ladda bilden från URL och konvertera till Base64
+    const img = new Image();
+    img.crossOrigin = 'Anonymous';  // Viktigt om bilderna ligger på olika domäner
+
+    img.onload = function() {
+        const canvasWidth = 2000;
+        const canvasHeight = 1000;
+        
+        // Skapa en temporär canvas för att konvertera bilden till Base64
+        const tempCanvas = document.createElement('canvas');
+        const ctx = tempCanvas.getContext('2d');
+
+        // Räkna ut bildens förhållande och hur vi ska skala och beskära
+        const imgAspectRatio = img.width / img.height;
+        const canvasAspectRatio = canvasWidth / canvasHeight;
+
+        let newWidth, newHeight;
+        if (imgAspectRatio > canvasAspectRatio) {
+            // Om bilden är bredare än canvasen, skala baserat på höjd
+            newHeight = canvasHeight;
+            newWidth = img.width * (canvasHeight / img.height);
+        } else {
+            // Om bilden är högre än canvasen, skala baserat på bredd
+            newWidth = canvasWidth;
+            newHeight = img.height * (canvasWidth / img.width);
+        }
+
+        tempCanvas.width = canvasWidth;
+        tempCanvas.height = canvasHeight;
+
+        // Rita bilden på den temporära canvasen, centrera och beskär om nödvändigt
+        ctx.drawImage(
+            img,
+            (canvasWidth - newWidth) / 2, // Centrera horisontellt
+            (canvasHeight - newHeight) / 2, // Centrera vertikalt
+            newWidth,
+            newHeight
+        );
+
+        // Konvertera till Base64
+        const base64String = tempCanvas.toDataURL('image/png');
+
+        // Skapa fabric bild från Base64-strängen
+        fabric.Image.fromURL(base64String, function(fabricImg) {
+            fabricImg.set({
+                left: 0,
+                top: 0,
+                scaleX: canvasWidth / fabricImg.width,
+                scaleY: canvasHeight / fabricImg.height
+            });
+
+            // Sätt bilden som bakgrund
+            canvas.setBackgroundImage(fabricImg, canvas.renderAll.bind(canvas));
+
+            // Uppdatera canvas JSON så att den hanterar Base64 istället för URL
+            canvas.backgroundImage.src = base64String; // Sätt Base64-strängen som källan
+        });
+    };
+
+    img.onerror = function() {
+        console.error('Misslyckades med att ladda bilden från URL:', imageUrl);
+        alert('Misslyckades med att ladda bakgrundsbilden.');
+    };
+
+    img.src = imageUrl;
+}
+
+
+
+function closePixabayModal() {
+    const modal = document.querySelector('.pixabay-modal');
+    if (modal) modal.remove();
+}
+// Lägg till eventlistener för att öppna Pixabay-modal vid knapptryckning
+document.getElementById('pixabaySearchButton').addEventListener('click', showPixabayModal);
+
+
+
+
+// Anropa funktionen för att rita ramen när canvasen skapas
+drawCanvasBorder();
+
+//Initiera med öl
+window.onload = function() {
+  init_beers(); // Starta inläsning av ölen
+    // Vänta tills alla bilder är laddade innan vi fortsätter
+    init_images().then(() => {
+        console.log('Alla bilder laddade. Fortsätter med att ladda öletiketten.');
+        
+        // Läs in URL-parametern för beer
+        const beerFromQuery = getQueryParam('beer');
+        
+        let selectedBeer;
+        
+        if (beerFromQuery && beers[beerFromQuery]) {
+            selectedBeer = beerFromQuery; // Använd ölen från URL-parametern om den finns
+            document.getElementById('templateSelection').value = beerFromQuery; // Sätt dropdown-menyn till rätt öl
+        } else {
+            selectedBeer = document.getElementById('templateSelection').value; // Använd värdet från dropdown-menyn om ingen URL-param finns
+        }
+
+        if (selectedBeer && beers[selectedBeer]) {
+            const beerJson = beers[selectedBeer];
+
+            // Ladda canvasen med JSON-data från den valda mallen
+            canvas.loadFromJSON(beerJson, function() {
+                canvas.renderAll(); // Rendera canvasen när allt har laddats
+				resetQrCode(); // Se till att rätt QR-kod är laddad och synlig
+
+            });
+        }
+    }).catch((error) => {
+        console.error('Fel vid laddning av bilder:', error);
+    });		
+};
+
+
+function getSelectedQrCode() {
+    const existingQrCode = canvas.getObjects().find(obj => obj.name === 'qrCode');
+    if (existingQrCode) {
+        const foundQrCode = Object.keys(qrCodes).find(key => qrCodes[key].image === existingQrCode.getSrc());
+        return foundQrCode || ""; // Returnera rätt värde eller tomt
+    }
+    return "";
+}
+
+// Funktion för att läsa av URL-parametrar
+function getQueryParam(param) {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get(param);
+}
+
+    </script>
+
+
+
