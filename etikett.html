@@ -646,7 +646,7 @@
 				<option value="syla">Syla (Pravda)</option>								
 			</select>
 			<span>eller</span>
-			<button id="uploadImageButton" class="action-button upload-image-btn"><i class="fas fa-folder-open"></i>Välj egen etikett</button>
+			<button id="uploadImageButton" class="action-button upload-image-btn"><i class="fas fa-folder-open"></i>Välj egen bakgrund</button>
 			<button id="pixabaySearchButton" class="action-button search-image-btn"><i class="fas fa-search"></i> Sök på Pixabay</button>
 
 			<input type="file" id="imageUpload" accept="image/png, image/jpeg" style="display: none;">
@@ -741,6 +741,15 @@
 			<input type="number" id="backgroundsTransparency" min="0" max="100" value="100">
 		</div>
 			
+		</div>
+		<div class="group-box">
+				<h3>Bilder</h3>
+		<div class="text-controls">	
+			<div class="text-actions">
+				<input type="file" id="imageUploadInput" accept="image/png, image/jpeg" style="display: none;">
+				<button id="addImageButton" class="action-button add-image-btn"><i class="fas fa-folder-open"></i> Lägg till bild</button>
+				<button id="removeImageButton" class="action-button remove-text-btn"><i class="fas fa-trash-alt"></i> Ta bort bild</button>
+			</div>
 		</div>
 		<div class="group-box">
 				<h3>Spara</h3>
@@ -879,6 +888,62 @@ function drawCanvas(beerDetails) {
         canvas.renderAll();
     });
 }
+
+
+// Lägg till eventlistener för att öppna filuppladdningsdialogen vid klick på "addImageButton"
+document.getElementById('addImageButton').addEventListener('click', function() {
+    // Trigga den dolda file-input för att välja en bild
+    document.getElementById('imageUploadInput').click();
+});
+
+// När en fil har valts
+document.getElementById('imageUploadInput').addEventListener('change', function(event) {
+    const file = event.target.files[0];
+    if (file && (file.type === 'image/png' || file.type === 'image/jpeg')) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            const imageDataUrl = e.target.result; // Base64-sträng
+
+            // Skapa ett nytt bildobjekt och lägg till det på canvasen
+            fabric.Image.fromURL(imageDataUrl, function(img) {
+                img.set({
+                    left: 100, // Placera den nya bilden vid en specifik position
+                    top: 100,
+                    selectable: true,
+                    name: 'userImage', // Sätt ett namn så vi kan identifiera att det är en användarbild
+                });
+                canvas.add(img); // Lägg till bilden på canvasen
+                canvas.setActiveObject(img); // Markera bilden som aktiv
+            });
+        };
+
+        // Läs filen som en Base64-sträng
+        reader.readAsDataURL(file); 
+    } else {
+        alert("Vänligen ladda upp en PNG eller JPG/JPEG-bild.");
+    }
+});
+
+// Lägg till eventlistener för att ta bort en bild vid klick på "removeImageButton"
+document.getElementById('removeImageButton').addEventListener('click', function() {
+    const activeObject = canvas.getActiveObject(); // Hämta det aktiva objektet (den valda bilden)
+
+    if (activeObject) {
+        // Kontrollera om det är en bild och inte en QR-kod baserat på 'name' och 'type'
+        if (activeObject.type === 'image' && activeObject.name !== 'qrCode') {
+            canvas.remove(activeObject); // Ta bort den valda bilden om det inte är en QR-kod
+        } else if (activeObject.type !== 'image') {
+            alert("Det valda objektet är inte en bild.");
+        } else {
+            alert("QR-koden kan inte tas bort.");
+        }
+    } else {
+        alert("Vänligen välj en bild att ta bort.");
+    }
+});
+
+
 
 document.getElementById('templateSelection').addEventListener('change', function () {
     const selectedBeer = this.value;
