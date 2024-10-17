@@ -364,17 +364,7 @@
     font-size: 24px;
 }
 
-#pixabayResults img {
-    width: 10%;
-    height: auto;
-    cursor: pointer;
-    border-radius: 5px;
-    transition: transform 0.3s;
-}
 
-#pixabayResults img:hover {
-    transform: scale(1.05);
-}
 .pixabay-modal {
     position: fixed;
     top: 0;
@@ -412,14 +402,15 @@
     flex-wrap: wrap; /* Gör att bilderna radbryts */
     gap: 10px; /* Avstånd mellan bilderna */
 }
-
 #pixabayResults img {
-    width: 200px;
-    height: 100px;
+    width: 15%;              /* Sätt bredden till 10% av förälderns bredd */
+    height: auto;            /* Automatisk höjd baserat på bildens proportioner */
+    aspect-ratio: 2 / 1;     /* Ställ in förhållandet mellan bredd och höjd till 2:1 */
     cursor: pointer;
     border-radius: 5px;
     transition: transform 0.3s;
 }
+
 
 #pixabayResults img:hover {
     transform: scale(2.0);
@@ -1532,7 +1523,7 @@ function init_images() {
 //Pixa
 function searchPixabay(query) {
     const apiKey = '46529806-e05a4c6183301481b18ac2b97'; // Din API-nyckel
-    const url = `https://pixabay.com/api/?key=${apiKey}&q=${encodeURIComponent(query)}&image_type=photo&orientation=horizontal&safesearch=true&per_page=32`;
+    const url = `https://pixabay.com/api/?key=${apiKey}&q=${encodeURIComponent(query)}&image_type=photo&orientation=horizontal&safesearch=true&per_page=30`;
 
     return fetch(url)
         .then(response => {
@@ -1561,6 +1552,7 @@ function showPixabayModal() {
     modal.innerHTML = `
         <div class="pixabay-modal-content">
             <span class="close-button" onclick="closePixabayModal()">&times;</span>
+			<p>Pixabay</p>
             <input type="text" id="pixabaySearchInput" placeholder="Sök efter bakgrundsbild...">
             <button id="pixabaySearchButtonInner">Sök</button>
 			<hr>
