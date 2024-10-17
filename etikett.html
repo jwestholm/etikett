@@ -852,7 +852,33 @@ function init_beers() {
     hideLoadingModal();
 }
 
+function ensureQrCodeOnTop() {
+    const qrCode = canvas.getObjects().find(obj => obj.name === 'qrCode');
+    if (qrCode) {
+        canvas.bringToFront(qrCode); // Flytta QR-koden till toppen
+    }
+}
+canvas.on('object:added', ensureQrCodeOnTop);
+canvas.on('object:modified', ensureQrCodeOnTop);
+canvas.on('object:scaling', ensureQrCodeOnTop);
+canvas.on('object:rotating', ensureQrCodeOnTop);
+canvas.on('object:moving', ensureQrCodeOnTop);
+// Flytta QR-koden till toppen när ett objekt väljs
+canvas.on('object:selected', function() {
+    ensureQrCodeOnTop();
+});
+// Flytta QR-koden till toppen när ett objekt på canvasen klickas
+canvas.on('mouse:down', function() {
+    ensureQrCodeOnTop();
+});
 
+// Flytta QR-koden till toppen när ett klick sker utanför canvasen
+window.addEventListener('click', function(event) {
+    const canvasElement = document.getElementById('myCanvas');
+    if (!canvasElement.contains(event.target)) {
+        ensureQrCodeOnTop();
+    }
+});
 
 function drawCanvas(beerDetails) {
     canvas.clear(); // Rensa canvasen
