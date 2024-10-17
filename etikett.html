@@ -469,6 +469,73 @@
     </div>
 </div>
 
+<div class="modal" id="pixabay-modal-content" style="display: none;">
+<div class="pixabay-modal-content">
+            <span class="close-button" onclick="hidePixabayModal()">&times;</span>
+			<p>Pixabay</p>
+			
+			<div id="search-panel">
+			<input type="text" id="query" placeholder="Sök efter bilder..." />
+
+			<!-- Dropdown för image_type -->
+			<label for="imageType">Bildtyp:</label>
+			<select id="imageType">
+				<option value="all">Alla</option>
+				<option value="photo" selected>Fotografier</option>
+				<option value="illustration">Illustrationer</option>
+				<option value="vector">Vektorer</option>
+			</select>
+
+			<!-- Dropdown för category -->
+			<label for="category">Kategori:</label>
+			<select id="category">
+				<option value="">Alla</option>
+				<option value="nature">Natur</option>
+				<option value="backgrounds">Bakgrunder</option>
+				<option value="science">Vetenskap</option>
+				<option value="education">Utbildning</option>
+				<option value="people">Människor</option>
+				<option value="sports">Sport</option>
+				<option value="animals">Djur</option>
+				<option value="travel">Resor</option>
+				<option value="buildings">Byggnader</option>
+				<option value="business">Affärer</option>
+				<!-- Lägg till fler kategorier efter behov -->
+			</select>
+
+			<!-- Knapp för order -->
+			<label for="order">Sortera:</label>
+			<button id="orderToggle" data-order="popular">Populäraste</button>
+
+			<!-- Knapp för safesearch -->
+			<label for="safesearch">Safesearch:</label>
+			<button id="safesearchToggle" data-safesearch="true">Aktiverad</button>
+
+			<!-- Knapp för editors_choice -->
+			<label for="editorsChoice">Redaktörens val:</label>
+			<button id="editorsChoiceToggle" data-editors-choice="false">Av</button>
+
+			<!-- Sökknapp -->
+			<button id="searchButton">Sök</button>
+		</div>
+		<hr>
+		<div id="pixabayResults"></div>
+		<hr>
+		<!-- Sidhänvisningspanel -->
+		<div id="pagination-panel">
+			<button id="prevPageButton" disabled>Föregående</button>
+			<span id="currentPage">1</span> av <span id="totalPages">1</span>
+			<button id="nextPageButton" disabled>Nästa</button>
+			<input type="number" id="pageInput" min="1" value="1" />
+			<button id="goToPageButton">Gå till sida</button>
+		</div>
+
+		<!-- Resultatpanel -->
+
+</div>
+</div>
+		
+		
     <div id="controls">
 		<div class="group-box">
 		<h3>Bakgrundsbild och Swish QR kod</h3>
@@ -616,6 +683,8 @@
     <script>
 		const QRStartX = 1620
 		const QRStartY = 86
+		let currentPage = 1; // Nuvarande sida
+		let totalPages = 1; // Totalt antal sidor (denna uppdateras efter första sökningen)
 		
 		class QRCode {
 			constructor(name, image) {
@@ -1546,64 +1615,153 @@ function searchPixabay(query) {
         });
 }
 function showPixabayModal() {
-    const modal = document.createElement('div');
-    modal.classList.add('pixabay-modal');
-
-    modal.innerHTML = `
-        <div class="pixabay-modal-content">
-            <span class="close-button" onclick="closePixabayModal()">&times;</span>
-			<p>Pixabay</p>
-            <input type="text" id="pixabaySearchInput" placeholder="Sök efter bakgrundsbild...">
-            <button id="pixabaySearchButtonInner">Sök</button>
-			<hr>
-            <div id="pixabayResults" class="pixabay-results"></div>
-        </div>
-    `;
-
-    document.body.appendChild(modal);
-    modal.style.display = 'flex'; // Visa modalen
-
-    // Lägg till sökfunktionalitet på sökknappen
-    document.getElementById('pixabaySearchButtonInner').addEventListener('click', performPixabaySearch);
+    
+ const pixabayModalContent = document.getElementById('pixabay-modal-content');
+    if (pixabayModalContent) {
+        pixabayModalContent.style.display = 'flex';
+    } else {
+        console.error('pixabay-modal-content finns inte i DOM.');
+    }}
+function hidePixabayModal() {
+    
+    const pixabayModalContent = document.getElementById('pixabay-modal-content');
+    if (pixabayModalContent) {
+        pixabayModalContent.style.display = 'none';
+    } else {
+        console.error('pixabay-modal-content finns inte i DOM.');
+    }
 }
-function performPixabaySearch() {
-    const query = document.getElementById('pixabaySearchInput').value;
 
-    if (!query) {
-        alert('Var vänlig och skriv in ett sökord för att hitta bilder.');
+// Lägg till sökfunktionalitet på sökknappen
+
+	// Eventlyssnare för sidnavigering
+	document.getElementById('prevPageButton').addEventListener('click', function() {
+		if (currentPage > 1) {
+			performPixabaySearch(currentPage - 1);
+		}
+	});
+
+	document.getElementById('nextPageButton').addEventListener('click', function() {
+		if (currentPage < totalPages) {
+			performPixabaySearch(currentPage + 1);
+		}
+	});
+	document.getElementById('goToPageButton').addEventListener('click', function() {
+		const pageInput = parseInt(document.getElementById('pageInput').value, 10);
+		if (pageInput >= 1 && pageInput <= totalPages) {
+			performPixabaySearch(pageInput);
+		} else {
+			alert('Sidanummer utanför giltigt intervall');
+		}
+	});
+	// Eventlyssnare för sortering
+	document.getElementById('orderToggle').addEventListener('click', toggleOrder);
+	document.getElementById('safesearchToggle').addEventListener('click', toggleSafeSearch);
+	document.getElementById('editorsChoiceToggle').addEventListener('click', toggleEditorsChoice);
+// Lägg till en eventlyssnare för sökknappen
+document.getElementById('searchButton').addEventListener('click', function() {
+    performPixabaySearch(); // Anropa funktionen som gör API-anropet
+});
+function performPixabaySearch(page = 1) {
+    const query = document.getElementById('query').value;
+    const imageType = document.getElementById('imageType').value;
+    const category = document.getElementById('category').value;
+    const order = document.getElementById('orderToggle').dataset.order;
+    const safesearch = document.getElementById('safesearchToggle').dataset.safesearch === 'true';
+    const editorsChoice = document.getElementById('editorsChoiceToggle').dataset.editorsChoice === 'true';
+
+    const perPage = 20; // Antal bilder per sida
+
+    const apiKey = '46529806-e05a4c6183301481b18ac2b97'; // Pixabay API-nyckel
+    const url = `https://pixabay.com/api/?key=${apiKey}&q=${encodeURIComponent(query)}&image_type=${imageType}&category=${category}&order=${order}&safesearch=${safesearch}&editors_choice=${editorsChoice}&page=${page}&per_page=${perPage}`;
+
+    // Gör API-anropet
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            // Hantera resultaten och visa bilderna
+            displayResults(data.hits);
+
+            // Hantera sidnavigering
+            // Uppdatera totalPages och currentPage
+            totalPages = Math.ceil(data.totalHits / perPage);
+            currentPage = page;  // Viktigt att uppdatera currentPage här;
+            updatePagination();
+        })
+        .catch(error => {
+            console.error('Ett fel inträffade vid bildsökningen:', error);
+        });
+}
+
+// Funktion för att visa bilder
+function displayResults(images) {
+    const resultsDiv = document.getElementById('pixabayResults');
+    resultsDiv.innerHTML = ''; // Rensa gamla resultat
+
+    if (images.length === 0) {
+        resultsDiv.innerHTML = '<p>Inga bilder hittades för denna sökning.</p>';
         return;
     }
 
-    searchPixabay(query).then(images => {
-        const resultsDiv = document.getElementById('pixabayResults');
-        resultsDiv.innerHTML = ''; // Rensa tidigare resultat
+    images.forEach(image => {
+        const imgElement = document.createElement('img');
+        imgElement.src = image.previewURL;
+        imgElement.alt = image.tags;
+        imgElement.style.cursor = 'pointer'; // Gör bilden klickbar
 
-        if (!images || images.length === 0) {
-            resultsDiv.innerHTML = '<p>Inga bilder hittades för denna sökning.</p>';
-            return;
-        }
-
-        images.forEach(image => {
-            const imgElement = document.createElement('img');
-            imgElement.src = image.previewURL; // Visa bildförhandsvisningen
-            imgElement.classList.add('pixabay-result');
-            imgElement.setAttribute('data-image-url', image.largeImageURL); // Lagra stora bildens URL
-
-            // Lägg till klickhändelse för att välja bild
-            imgElement.addEventListener('click', function() {
-                const selectedImageUrl = this.getAttribute('data-image-url');
-                setBackgroundImageToCanvas(selectedImageUrl);
-                closePixabayModal(); // Stäng modalen efter att användaren valt en bild
-            });
-
-            resultsDiv.appendChild(imgElement);
+        // Lägg till click event för att sätta bakgrund och stänga modalen
+        imgElement.addEventListener('click', function() {
+            setBackgroundImageToCanvas(image.largeImageURL); // Sätt bakgrundsbilden på canvasen
+            hidePixabayModal(); // Stäng modalen
         });
-    }).catch(() => {
-        const resultsDiv = document.getElementById('pixabayResults');
-        resultsDiv.innerHTML = '<p>Ett fel inträffade under bildsökningen. Försök igen senare.</p>';
+
+        resultsDiv.appendChild(imgElement);
     });
 }
+// Uppdatera pagination och aktivera/inaktivera knappar
+function updatePagination() {
+    document.getElementById('currentPage').textContent = currentPage;
+    document.getElementById('totalPages').textContent = totalPages;
+    document.getElementById('prevPageButton').disabled = currentPage <= 1;
+    document.getElementById('nextPageButton').disabled = currentPage >= totalPages;
+}
+// Gå till en specifik sida
+function goToPage() {
+    const pageInput = parseInt(document.getElementById('pageInput').value);
+    if (pageInput >= 1 && pageInput <= totalPages) {
+        currentPage = pageInput;
+        performSearch();
+    } else {
+        alert('Sidanummer utanför giltigt intervall');
+    }
+}
 
+// Funktion för att toggla sorteringsläge
+function toggleOrder() {
+    const orderButton = document.getElementById('orderToggle');
+    const currentOrder = orderButton.dataset.order;
+
+    orderButton.dataset.order = currentOrder === 'popular' ? 'latest' : 'popular';
+    orderButton.textContent = currentOrder === 'popular' ? 'Senaste' : 'Populäraste';
+}
+
+// Funktion för att toggla safesearch
+function toggleSafeSearch() {
+    const safeSearchButton = document.getElementById('safesearchToggle');
+    const currentStatus = safeSearchButton.dataset.safesearch === 'true';
+
+    safeSearchButton.dataset.safesearch = currentStatus ? 'false' : 'true';
+    safeSearchButton.textContent = currentStatus ? 'Av' : 'Aktiverad';
+}
+
+// Funktion för att toggla redaktörens val
+function toggleEditorsChoice() {
+    const editorsChoiceButton = document.getElementById('editorsChoiceToggle');
+    const currentStatus = editorsChoiceButton.dataset.editorsChoice === 'true';
+
+    editorsChoiceButton.dataset.editorsChoice = currentStatus ? 'false' : 'true';
+    editorsChoiceButton.textContent = currentStatus ? 'Av' : 'På';
+}
 function setBackgroundImageToCanvas(imageUrl) {
     // Ladda bilden från URL och konvertera till Base64
     const img = new Image();
@@ -1673,11 +1831,6 @@ function setBackgroundImageToCanvas(imageUrl) {
 }
 
 
-
-function closePixabayModal() {
-    const modal = document.querySelector('.pixabay-modal');
-    if (modal) modal.remove();
-}
 // Lägg till eventlistener för att öppna Pixabay-modal vid knapptryckning
 document.getElementById('pixabaySearchButton').addEventListener('click', showPixabayModal);
 
@@ -1721,7 +1874,15 @@ window.onload = function() {
     });		
 };
 
-
+document.addEventListener('DOMContentLoaded', function() {
+    const pixabayModalContent = document.getElementById('pixabay-modal-content');
+    if (pixabayModalContent) {
+        console.log("pixabay-modal-content är tillgänglig.");
+        // Fortsätt med din kod här
+    } else {
+        console.error("pixabay-modal-content saknas.");
+    }
+});
 function getSelectedQrCode() {
     const existingQrCode = canvas.getObjects().find(obj => obj.name === 'qrCode');
     if (existingQrCode) {
