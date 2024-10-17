@@ -750,7 +750,23 @@
 				<button id="addImageButton" class="action-button add-image-btn"><i class="fas fa-folder-open"></i> Lägg till bild</button>
 				<button id="removeImageButton" class="action-button remove-text-btn"><i class="fas fa-trash-alt"></i> Ta bort bild</button>
 			</div>
+			<div class="vertical-divider"></div>
+			<div class="image-controls">
+				<label for="shadowButton">Skugga:</label>
+				<button id="shadowButton">Aktivera skugga</button>
+
+				<label for="shadowBlur">Skuggtjocklek:</label>
+				<input type="number" id="shadowBlur" min="0" max="50" value="10">
+
+				<label for="shadowAngle">Vinkel:</label>
+				<input type="number" id="shadowAngle" min="0" max="360" value="45">
+
+				<label for="imageTransparency">Transparens:</label>
+				<input type="number" id="imageTransparency" min="0" max="100" value="100">
+			</div>
 		</div>
+		</div>
+		
 		<div class="group-box">
 				<h3>Spara</h3>
 		<div class="text-controls">		
@@ -966,6 +982,62 @@ document.getElementById('removeImageButton').addEventListener('click', function(
         }
     } else {
         alert("Vänligen välj en bild att ta bort.");
+    }
+});
+
+
+
+
+
+// Event för att aktivera eller inaktivera skugga
+document.getElementById('shadowButton').addEventListener('click', function() {
+    const activeObject = canvas.getActiveObject();
+    if (activeObject && activeObject.name !== 'qrCode') {
+        if (activeObject.shadow) {
+            activeObject.set('shadow', null); // Om skugga redan är aktiv, ta bort den
+        } else {
+            // Aktivera en standard skugga om ingen finns
+            const shadow = new fabric.Shadow({
+                color: 'rgba(0, 0, 0, 0.6)', // Standardfärg och transparens
+                blur: parseFloat(document.getElementById('shadowBlur').value) || 10, // Använd befintlig suddighet eller default
+                offsetX: 10, // Standard X-förskjutning
+                offsetY: 10  // Standard Y-förskjutning
+            });
+            activeObject.set('shadow', shadow);
+        }
+        canvas.renderAll();
+    }
+});
+
+// Event för att justera skuggtjocklek (blur)
+document.getElementById('shadowBlur').addEventListener('input', function() {
+    const activeObject = canvas.getActiveObject();
+    if (activeObject && activeObject.shadow && activeObject.name !== 'qrCode') {
+        activeObject.shadow.blur = parseFloat(this.value); // Justera blur på skuggan
+        canvas.renderAll();
+    }
+});
+
+// Event för att justera skuggvinkeln (angle)
+document.getElementById('shadowAngle').addEventListener('input', function() {
+    const activeObject = canvas.getActiveObject();
+    if (activeObject && activeObject.shadow && activeObject.name !== 'qrCode') {
+        const angle = parseFloat(this.value); // Hämta vinkelvärdet
+        const radians = angle * (Math.PI / 180); // Konvertera till radianer
+        const blur = activeObject.shadow.blur || 10; // Omvandla blur till X och Y förskjutning
+        activeObject.shadow.offsetX = Math.cos(radians) * blur;
+        activeObject.shadow.offsetY = Math.sin(radians) * blur;
+        canvas.renderAll();
+    }
+});
+
+
+document.getElementById('imageTransparency').addEventListener('input', function() {
+    const activeObject = canvas.getActiveObject();
+    if (activeObject && activeObject.type === 'image' && activeObject.name !== 'qrCode') {
+        const transparency = this.value / 100; // Konvertera värdet från 0-100 till 0-1
+        activeObject.set('opacity', transparency);
+        canvas.renderAll();
     }
 });
 
