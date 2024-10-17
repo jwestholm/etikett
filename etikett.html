@@ -226,34 +226,20 @@
 			margin-right: 5px; /* Ger lite utrymme mellan label och input */
 		}
 		
-		#backgroundsTransparency {
-			padding: 10px;
-			border-radius: 5px;
-			border: 2px solid #ccc;
-			font-size: 16px;
-			width: 65px;
-			text-align: center;
-			transition: border-color 0.3s ease;
-		}
+input[type="number"] {
+    width: 65px;
+    padding: 10px;
+    border-radius: 5px;
+    border: 2px solid #ccc;
+    font-size: 16px;
+    text-align: center;
+    transition: border-color 0.3s ease;
+}
 
-		#backgroundsTransparency:focus {
-			border-color: #007bff;
-			outline: none;
-		}		
-		#transparency {
-			padding: 10px;
-			border-radius: 5px;
-			border: 2px solid #ccc;
-			font-size: 16px;
-			width: 65px;
-			text-align: center;
-			transition: border-color 0.3s ease;
-		}
-
-		#transparency:focus {
-			border-color: #007bff;
-			outline: none;
-		}
+input[type="number"]:focus {
+    border-color: #007bff;
+    outline: none;
+}
 
 		.vertical-divider {
 			width: 1px; /* Tunn linje */
@@ -628,7 +614,6 @@
 		
     <div id="controls">
 		<div class="group-box">
-		<h3>Bakgrundsbild och Swish QR kod</h3>
 			<div class="text-controls">		
 			
 			<label for="templateSelection">Välj mall:</label>
@@ -669,7 +654,6 @@
 			</div>
 		</div>
 		<div class="group-box">
-				<h3>Text och Font</h3>
 		<div class="text-controls">		
 		
 		<div class="text-actions">
@@ -743,32 +727,27 @@
 			
 		</div>
 		<div class="group-box">
-				<h3>Bilder</h3>
 		<div class="text-controls">	
 			<div class="text-actions">
 				<input type="file" id="imageUploadInput" accept="image/png, image/jpeg" style="display: none;">
 				<button id="addImageButton" class="action-button add-image-btn"><i class="fas fa-folder-open"></i> Lägg till bild</button>
 				<button id="removeImageButton" class="action-button remove-text-btn"><i class="fas fa-trash-alt"></i> Ta bort bild</button>
 			</div>
-			<div class="vertical-divider"></div>
-			<div class="image-controls">
-				<label for="shadowButton">Skugga:</label>
-				<button id="shadowButton">Aktivera skugga</button>
+				<div class="vertical-divider"></div>
+					<button id="shadowButton" class="action-button"><i class="fa fa-circle"></i> Skugga</button>
 
-				<label for="shadowBlur">Skuggtjocklek:</label>
-				<input type="number" id="shadowBlur" min="0" max="50" value="10">
+					<input type="number" id="shadowBlur" min="0" max="50" value="10">
 
-				<label for="shadowAngle">Vinkel:</label>
-				<input type="number" id="shadowAngle" min="0" max="360" value="45">
-
-				<label for="imageTransparency">Transparens:</label>
-				<input type="number" id="imageTransparency" min="0" max="100" value="100">
-			</div>
+					<div id="rotationDialContainer" style="position: relative; width: 45px; height: 45px;">
+						<canvas id="rotationDial" width="45" height="45" style="border-radius: 50%; background-color: lightgray;"></canvas>
+					</div>
+				<div class="vertical-divider"></div>
+					<label for="imageTransparency">Transparens:</label>
+					<input type="number" id="imageTransparency" min="0" max="100" value="100">
 		</div>
 		</div>
 		
 		<div class="group-box">
-				<h3>Spara</h3>
 		<div class="text-controls">		
 		<button id="saveButton" class="action-button save-btn"><i class="fas fa-save"></i>Spara som PNG</button>
 		 <!-- Spara som PDF-knappen -->
@@ -932,6 +911,74 @@ function drawCanvas(beerDetails) {
 }
 
 
+
+const dialCanvas = document.getElementById('rotationDial');
+const dialContext = dialCanvas.getContext('2d');
+let rotationAngle = 0;
+
+// Rita visaren
+function drawDial(angle) {
+    dialContext.clearRect(0, 0, dialCanvas.width, dialCanvas.height); // Rensa canvasen
+
+    dialContext.save(); // Spara nuvarande tillstånd
+    dialContext.translate(dialCanvas.width / 2, dialCanvas.height / 2); // Flytta origin till mitten
+    dialContext.rotate((angle * Math.PI) / 180); // Roterar visaren
+
+    // Rita visaren som en linje
+    dialContext.beginPath();
+    dialContext.moveTo(0, 0);
+    dialContext.lineTo(0, -20); // En linje från mitten uppåt
+    dialContext.strokeStyle = "black"; // Färg på visaren
+    dialContext.lineWidth = 5;
+    dialContext.stroke();
+
+    dialContext.restore(); // Återställ tillståndet
+}
+
+// Starta med en standardvisare
+drawDial(0);
+
+// Event för att hantera musdragning
+let dragging = false;
+
+dialCanvas.addEventListener('mousedown', (event) => {
+    dragging = true;
+});
+
+dialCanvas.addEventListener('mouseup', () => {
+    dragging = false;
+});
+
+dialCanvas.addEventListener('mousemove', (event) => {
+    if (dragging) {
+        const rect = dialCanvas.getBoundingClientRect();
+        const centerX = rect.left + dialCanvas.width / 2;
+        const centerY = rect.top + dialCanvas.height / 2;
+
+        const deltaX = event.clientX - centerX;
+        const deltaY = event.clientY - centerY;
+
+        // Beräkna vinkeln baserat på musens position
+        const angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI) + 90; // Omvandla till grader och justera för 12-tiden
+
+        rotationAngle = angle < 0 ? 360 + angle : angle; // Justera så att vinkeln är mellan 0 och 360
+
+        // Rita om visaren
+        drawDial(rotationAngle);
+
+        // Använd `rotationAngle` för att uppdatera den valda objektets rotation i Fabric.js
+        const activeObject = canvas.getActiveObject();
+			
+			if (activeObject && activeObject.shadow && activeObject.name !== 'qrCode') {
+				const radians = rotationAngle * (Math.PI / 180); // Konvertera till radianer
+				const blur = activeObject.shadow.blur || 10; // Omvandla blur till X och Y förskjutning
+				activeObject.shadow.offsetX = Math.cos(radians) * blur;
+				activeObject.shadow.offsetY = Math.sin(radians) * blur;
+				canvas.renderAll();
+        }
+    }
+});
+
 // Lägg till eventlistener för att öppna filuppladdningsdialogen vid klick på "addImageButton"
 document.getElementById('addImageButton').addEventListener('click', function() {
     // Trigga den dolda file-input för att välja en bild
@@ -992,23 +1039,32 @@ document.getElementById('removeImageButton').addEventListener('click', function(
 // Event för att aktivera eller inaktivera skugga
 document.getElementById('shadowButton').addEventListener('click', function() {
     const activeObject = canvas.getActiveObject();
-    if (activeObject && activeObject.name !== 'qrCode') {
-        if (activeObject.shadow) {
-            activeObject.set('shadow', null); // Om skugga redan är aktiv, ta bort den
+
+    if (activeObject) {
+        const shadowExists = activeObject.shadow;
+
+        if (shadowExists) {
+            // Om skuggan finns, ta bort den och byt ikon
+            activeObject.setShadow(null);
+            this.querySelector('i').classList.remove('fa-times-circle');
+            this.querySelector('i').classList.add('fa-circle');
         } else {
-            // Aktivera en standard skugga om ingen finns
-            const shadow = new fabric.Shadow({
+				const shadow = new fabric.Shadow({
                 color: 'rgba(0, 0, 0, 0.6)', // Standardfärg och transparens
                 blur: parseFloat(document.getElementById('shadowBlur').value) || 10, // Använd befintlig suddighet eller default
                 offsetX: 10, // Standard X-förskjutning
                 offsetY: 10  // Standard Y-förskjutning
             });
             activeObject.set('shadow', shadow);
+            this.querySelector('i').classList.remove('fa-circle');
+            this.querySelector('i').classList.add('fa-times-circle');
         }
-        canvas.renderAll();
+
+        canvas.renderAll(); // Rendera om canvasen för att visa ändringarna
+    } else {
+        alert("Välj ett objekt att lägga till eller ta bort skugga på.");
     }
 });
-
 // Event för att justera skuggtjocklek (blur)
 document.getElementById('shadowBlur').addEventListener('input', function() {
     const activeObject = canvas.getActiveObject();
@@ -1018,18 +1074,6 @@ document.getElementById('shadowBlur').addEventListener('input', function() {
     }
 });
 
-// Event för att justera skuggvinkeln (angle)
-document.getElementById('shadowAngle').addEventListener('input', function() {
-    const activeObject = canvas.getActiveObject();
-    if (activeObject && activeObject.shadow && activeObject.name !== 'qrCode') {
-        const angle = parseFloat(this.value); // Hämta vinkelvärdet
-        const radians = angle * (Math.PI / 180); // Konvertera till radianer
-        const blur = activeObject.shadow.blur || 10; // Omvandla blur till X och Y förskjutning
-        activeObject.shadow.offsetX = Math.cos(radians) * blur;
-        activeObject.shadow.offsetY = Math.sin(radians) * blur;
-        canvas.renderAll();
-    }
-});
 
 
 document.getElementById('imageTransparency').addEventListener('input', function() {
