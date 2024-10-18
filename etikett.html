@@ -775,8 +775,8 @@ input[type="number"]:focus {
 
 
     <script>
-		const QRStartX = 1620
-		const QRStartY = 86
+		const QRStartX = 1620;
+		const QRStartY = 86;
 		let currentPage = 1; // Nuvarande sida
 		let totalPages = 1; // Totalt antal sidor (denna uppdateras efter första sökningen)
 		
@@ -875,40 +875,6 @@ window.addEventListener('click', function(event) {
     }
 });
 
-function drawCanvas(beerDetails) {
-    canvas.clear(); // Rensa canvasen
-
-    // Rita bakgrund
-    fabric.Image.fromURL(beerDetails.background, function(img) {
-        img.scaleToWidth(canvas.width); // Skala bakgrunden för att fylla hela canvasen
-        canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas));
-
-        // Kontrollera att texts är en array innan vi kör forEach
-        if (beerDetails.texts && Array.isArray(beerDetails.texts)) {
-            beerDetails.texts.forEach(text => {
-                const textObj = new fabric.IText(text.text, {
-                    left: text.left,
-                    top: text.top,
-                    fontFamily: text.fontFamily,
-                    fontSize: text.fontSize,
-                    fontWeight: text.fontWeight,
-                    fill: text.fill,
-                    scaleX: text.scaleX,
-                    scaleY: text.scaleY,
-                    angle: text.angle,
-                    opacity: text.opacity,
-                    underline: text.underline,
-                    selectable: true,
-                    editable: true
-                });
-                canvas.add(textObj); // Lägg till texten på canvasen
-            });
-        }
-
-        // Rendera alla objekt
-        canvas.renderAll();
-    });
-}
 
 
 
@@ -1343,13 +1309,7 @@ function extractAlpha(color) {
 
 
 // Hjälpfunktion för att konvertera RGBA till HEX
-function rgbaToHex(rgba) {
-    const rgbaParts = rgba.match(/\d+/g);
-    const r = parseInt(rgbaParts[0]);
-    const g = parseInt(rgbaParts[1]);
-    const b = parseInt(rgbaParts[2]);
-    return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
-}
+
 function rgbToHex(rgb) {
     if (!rgb || typeof rgb !== 'string') {
         console.error('Ogiltig färgsträng:', rgb);
@@ -1887,30 +1847,6 @@ function init_images() {
 }
 
 //Pixa
-function searchPixabay(query) {
-    const apiKey = '46529806-e05a4c6183301481b18ac2b97'; // Din API-nyckel
-    const url = `https://pixabay.com/api/?key=${apiKey}&q=${encodeURIComponent(query)}&image_type=photo&orientation=horizontal&safesearch=true&per_page=30`;
-
-    return fetch(url)
-        .then(response => {
-            if (!response.ok) {
-                console.error(`API-fel: ${response.status} - ${response.statusText}`);
-                throw new Error(`API-fel: ${response.status} - ${response.statusText}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.totalHits === 0) {
-                console.warn('Inga bilder hittades för denna sökning.');
-                throw new Error('Inga bilder hittades.');
-            }
-            return data.hits; // Returnera arrayen med bildresultat
-        })
-        .catch(error => {
-            console.error('Ett fel inträffade vid API-anropet:', error.message, error);
-            alert('Ett fel inträffade under bildsökningen. Försök igen senare.');
-        });
-}
 function showPixabayModal() {
     
  const pixabayModalContent = document.getElementById('pixabay-modal-content');
@@ -2027,16 +1963,6 @@ function updatePagination() {
     document.getElementById('totalPages').textContent = totalPages;
     document.getElementById('prevPageButton').disabled = currentPage <= 1;
     document.getElementById('nextPageButton').disabled = currentPage >= totalPages;
-}
-// Gå till en specifik sida
-function goToPage() {
-    const pageInput = parseInt(document.getElementById('pageInput').value);
-    if (pageInput >= 1 && pageInput <= totalPages) {
-        currentPage = pageInput;
-        performSearch();
-    } else {
-        alert('Sidanummer utanför giltigt intervall');
-    }
 }
 
 // Funktion för att toggla sorteringsläge
