@@ -848,6 +848,82 @@ function init_beers() {
     // Optionally, hide the modal after all beers have been loaded
     hideLoadingModal();
 }
+canvas.on('object:modified', function(e) {
+    const obj = e.target;
+
+    // Om QR-koden flyttas eller ändras, justera cuttingRect
+    if (obj.name === 'qrCode') {
+        const qrLeft = obj.left;
+        const qrTop = obj.top;
+        const qrRight = qrLeft + obj.width * obj.scaleX;
+        const qrBottom = qrTop + obj.height * obj.scaleY;
+
+        if (!cuttingRect) return;
+
+        // Expandera cuttingRect om QR-koden flyttas utanför
+        if (cuttingRect.left > qrLeft) {
+            cuttingRect.left = qrLeft;
+        }
+        if (cuttingRect.top > qrTop) {
+            cuttingRect.top = qrTop;
+        }
+        if (cuttingRect.left + cuttingRect.width * cuttingRect.scaleX < qrRight) {
+            cuttingRect.set('width', (qrRight - cuttingRect.left) / cuttingRect.scaleX);
+        }
+        if (cuttingRect.top + cuttingRect.height * cuttingRect.scaleY < qrBottom) {
+            cuttingRect.set('height', (qrBottom - cuttingRect.top) / cuttingRect.scaleY);
+        }
+
+        canvas.renderAll();
+    }
+});
+
+canvas.on('object:scaling', function(e) {
+    let obj = e.target;
+
+    // Se till att det är cuttingRect vi skalar
+    if (obj.name === 'cuttingRect') {
+        const qrCode = canvas.getObjects().find(o => o.name === 'qrCode');
+        if (!qrCode) return;
+
+        const qrLeft = qrCode.left;
+        const qrTop = qrCode.top;
+        const qrRight = qrLeft + qrCode.width * qrCode.scaleX;
+        const qrBottom = qrTop + qrCode.height * qrCode.scaleY;
+
+        // Kontrollera att cuttingRect håller sig inom canvasen
+        if (obj.left < 0) {
+            obj.left = 0; // Förhindra att cuttingRect dras utanför till vänster
+        }
+        if (obj.top < 0) {
+            obj.top = 0; // Förhindra att cuttingRect dras utanför toppen
+        }
+        if (obj.left + obj.width * obj.scaleX > canvas.width) {
+            obj.set('width', (canvas.width - obj.left) / obj.scaleX); // Förhindra att cuttingRect går utanför canvasens bredd
+        }
+        if (obj.top + obj.height * obj.scaleY > canvas.height) {
+            obj.set('height', (canvas.height - obj.top) / obj.scaleY); // Förhindra att cuttingRect går utanför canvasens höjd
+        }
+
+        // Kontrollera att cuttingRect inte går över QR-kodens gränser
+        if (obj.left > qrLeft) {
+            obj.left = qrLeft; // Förhindra att cuttingRect dras in över QR-koden
+        }
+        if (obj.top > qrTop) {
+            obj.top = qrTop; // Förhindra att cuttingRect dras under QR-koden
+        }
+        if (obj.left + obj.width * obj.scaleX < qrRight) {
+            obj.set('width', (qrRight - obj.left) / obj.scaleX); // Expandera width om QR-koden hamnar utanför cuttingRect
+        }
+        if (obj.top + obj.height * obj.scaleY < qrBottom) {
+            obj.set('height', (qrBottom - obj.top) / obj.scaleY); // Expandera height om QR-koden hamnar utanför cuttingRect
+        }
+
+        canvas.renderAll(); // Rendera om för att visa förändringarna
+    }
+});
+
+
 
 function ensureQrCodeOnTop() {
     const qrCode = canvas.getObjects().find(obj => obj.name === 'qrCode');
@@ -907,15 +983,19 @@ function addCuttingRect() {
             strokeWidth: 2,
             selectable: true,
             name: 'cuttingRect',
+            lockRotation: true,  // Lås rotation
+            lockMovementX: true, // Lås förflyttning i X-led
+            lockMovementY: true, // Lås förflyttning i Y-led
+            hasControls: true, // Tillåt skalning (resize)
         });
         canvas.add(cuttingRect);
         canvas.sendToBack(cuttingRect); // Lägg cuttingRect längst bak
         canvas.bringForward(cuttingRect); // Men fortfarande över bakgrunden
     }
     cuttingRectVisible = true;
-		// Uppdatera knappen till aktiv
-		document.getElementById('toggleCuttingRect').classList.add('active');	
+    document.getElementById('toggleCuttingRectButton').classList.add('active');
 }
+
 
 // Tar bort cuttingRect från canvasen
 function removeCuttingRect() {
@@ -1711,25 +1791,50 @@ document.getElementById('exportJsonButton').addEventListener('click', function()
 });
 
 
-
 canvas.on('object:modified', function(e) {
-    let obj = e.target;
+    const obj = e.target;
 
-    if (obj.left < 0) {
-        obj.set({ left: 0 });
-    }
-    if (obj.top < 0) {
-        obj.set({ top: 0 });
-    }
-    if (obj.left + obj.width * obj.scaleX > canvas.width) {
-        obj.set({ left: canvas.width - obj.width * obj.scaleX });
-    }
-    if (obj.top + obj.height * obj.scaleY > canvas.height) {
-        obj.set({ top: canvas.height - obj.height * obj.scaleY });
-    }
+    // Om QR-koden flyttas eller ändras, justera cuttingRect
+    if (obj.name === 'qrCode') {
+        const qrLeft = obj.left;
+        const qrTop = obj.top;
+        const qrRight = qrLeft + obj.width * obj.scaleX;
+        const qrBottom = qrTop + obj.height * obj.scaleY;
 
-    canvas.renderAll();
+        if (!cuttingRect) return;
+
+        // Kontrollera att cuttingRect håller sig inom canvasens gränser
+        if (cuttingRect.left < 0) {
+            cuttingRect.left = 0;
+        }
+        if (cuttingRect.top < 0) {
+            cuttingRect.top = 0;
+        }
+        if (cuttingRect.left + cuttingRect.width * cuttingRect.scaleX > canvas.width) {
+            cuttingRect.set('width', (canvas.width - cuttingRect.left) / cuttingRect.scaleX);
+        }
+        if (cuttingRect.top + cuttingRect.height * cuttingRect.scaleY > canvas.height) {
+            cuttingRect.set('height', (canvas.height - cuttingRect.top) / cuttingRect.scaleY);
+        }
+
+        // Expandera cuttingRect om QR-koden flyttas utanför
+        if (cuttingRect.left > qrLeft) {
+            cuttingRect.left = qrLeft;
+        }
+        if (cuttingRect.top > qrTop) {
+            cuttingRect.top = qrTop;
+        }
+        if (cuttingRect.left + cuttingRect.width * cuttingRect.scaleX < qrRight) {
+            cuttingRect.set('width', (qrRight - cuttingRect.left) / cuttingRect.scaleX);
+        }
+        if (cuttingRect.top + cuttingRect.height * cuttingRect.scaleY < qrBottom) {
+            cuttingRect.set('height', (qrBottom - cuttingRect.top) / cuttingRect.scaleY);
+        }
+
+        canvas.renderAll();
+    }
 });
+
 function drawCanvasBorder() {
     const border = new fabric.Rect({
         left: 0,
