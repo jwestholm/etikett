@@ -749,6 +749,8 @@ input[type="number"]:focus {
 		
 		<div class="group-box">
 		<div class="text-controls">		
+		<button id="toggleCuttingRect" class="action-button"><i class="fas fa-cut"></i> Visa/Utan skärkant</button>
+
 		<button id="saveButton" class="action-button save-btn"><i class="fas fa-save"></i>Spara som PNG</button>
 		 <!-- Spara som PDF-knappen -->
 
@@ -875,6 +877,80 @@ window.addEventListener('click', function(event) {
     }
 });
 
+
+let cuttingRect = null; // Global variabel för cuttingRect
+let cuttingRectVisible = false; // För att hålla koll på om den ska vara synlig eller inte
+let cuttingRectToggled = false;
+
+document.getElementById('toggleCuttingRect').addEventListener('click', function() {
+ if (cuttingRectToggled) {
+        hideCuttingRect(); // Döljer cuttingRect och uppdaterar knappens status
+    } else {
+        if (!cuttingRect) {
+            addCuttingRect(); // Skapa cuttingRect om den inte finns
+        }
+        showCuttingRect(); // Visar cuttingRect och uppdaterar knappens status
+    }
+    cuttingRectToggled = !cuttingRectToggled; // Växla status
+});
+// Lägger till cuttingRect på canvasen
+function addCuttingRect() {
+    if (!cuttingRect) {
+        cuttingRect = new fabric.Rect({
+            left: 10,
+            top: 10,
+            width: 1980,
+            height: 980,
+            fill: 'rgba(255,0,0,0.2)', // Semi-transparent röd färg
+            stroke: 'black',
+            strokeDashArray: [5, 5], // Streckade linjer (cutting lines)
+            strokeWidth: 2,
+            selectable: true,
+            name: 'cuttingRect',
+        });
+        canvas.add(cuttingRect);
+        canvas.sendToBack(cuttingRect); // Lägg cuttingRect längst bak
+        canvas.bringForward(cuttingRect); // Men fortfarande över bakgrunden
+    }
+    cuttingRectVisible = true;
+		// Uppdatera knappen till aktiv
+		document.getElementById('toggleCuttingRect').classList.add('active');	
+}
+
+// Tar bort cuttingRect från canvasen
+function removeCuttingRect() {
+    if (cuttingRect) {
+        canvas.remove(cuttingRect);
+        cuttingRect = null;
+        cuttingRectVisible = false;
+		 // Uppdatera knappen till inaktiv
+    document.getElementById('toggleCuttingRect').classList.remove('active');
+    }
+	   
+}
+
+// Döljer cuttingRect om den redan finns
+function hideCuttingRect() {
+    if (cuttingRect) {
+        cuttingRect.set('visible', false); // Döljer cuttingRect
+        canvas.renderAll();
+        cuttingRectVisible = false;
+		 // Uppdatera knappen till inaktiv
+			document.getElementById('toggleCuttingRect').classList.remove('active');		
+    }
+	
+}
+
+// Visar cuttingRect om den redan finns
+function showCuttingRect() {
+    if (cuttingRect) {
+        cuttingRect.set('visible', true); // Visar cuttingRect
+        canvas.renderAll();
+        cuttingRectVisible = true;
+		// Uppdatera knappen till aktiv
+		document.getElementById('toggleCuttingRect').classList.add('active');
+    }
+}
 
 
 
@@ -1058,10 +1134,21 @@ document.getElementById('templateSelection').addEventListener('change', function
     
     if (selectedBeer && beers[selectedBeer]) {
         const beerJson = beers[selectedBeer];
+		
+			// Ta bort cuttingRect om den finns
+			if (cuttingRect) {
+				removeCuttingRect();
+				cuttingRectToggled = false;
+			}
         
         // Ladda hela JSON-objektet på canvasen
         canvas.loadFromJSON(beerJson, function() {
             canvas.renderAll(); // Rendera canvasen när allt har laddats
+			// Återställ cuttingRect om den var aktiv tidigare
+            if (cuttingRectToggled) {
+                addCuttingRect();
+                showCuttingRect(); // Se till att cuttingRect visas och knappen är korrekt
+            }
         });
 
          // Uppdatera QR-kod
