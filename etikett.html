@@ -1697,6 +1697,9 @@ const { jsPDF } = window.jspdf;
 document.getElementById('savePdfButton').addEventListener('click', function() {
     const labelSize = document.getElementById('labelSize').value; // Hämta valet från dropdown-menyn
 
+    // Definiera standardmarginal (5 mm)
+    const margin = 5; // 0.5 cm
+
     // Generera PNG via generateExportCanvas
     generateExportCanvas('png', function(pngDataUrl) {
         const pdf = new jsPDF('portrait', 'mm', 'a4');
@@ -1708,7 +1711,7 @@ document.getElementById('savePdfButton').addEventListener('click', function() {
             const imgWidthInPixels = img.width;  // Bredden på PNG-bilden i pixlar
             const imgHeightInPixels = img.height; // Höjden på PNG-bilden i pixlar
 
-            const dpi = 280; // Använd DPI för att få rätt storlek i mm
+            const dpi = 300; // Använd DPI för att få rätt storlek i mm
             const imgWidthInMm = (imgWidthInPixels / dpi) * 25.4;
             const imgHeightInMm = (imgHeightInPixels / dpi) * 25.4;
 
@@ -1716,23 +1719,33 @@ document.getElementById('savePdfButton').addEventListener('click', function() {
             const pageHeight = pdf.internal.pageSize.height;
 
             if (labelSize === 'fill') {
-                // Om "Fyll A4" är vald: Lägg till flera etiketter på sidan
-                const labelsPerRow = Math.floor(pageWidth / imgWidthInMm);
-                const labelsPerColumn = Math.floor(pageHeight / imgHeightInMm);
+                // Beräkna tillgängligt utrymme genom att subtrahera marginaler
+                const availableWidth = pageWidth - 2 * margin;
+                const availableHeight = pageHeight - 2 * margin;
 
-                const horizontalPadding = (pageWidth - (labelsPerRow * imgWidthInMm)) / 2;
-                const verticalPadding = (pageHeight - (labelsPerColumn * imgHeightInMm)) / 2;
+                // Beräkna hur många etiketter som får plats på en rad och en kolumn
+                const labelsPerRow = Math.floor(availableWidth / imgWidthInMm);
+                const labelsPerColumn = Math.floor(availableHeight / imgHeightInMm);
 
-                let xPos = horizontalPadding;
-                let yPos = verticalPadding;
+                // Beräkna det totala utrymmet som behövs för bilderna
+                const totalLabelsWidth = labelsPerRow * imgWidthInMm;
+                const totalLabelsHeight = labelsPerColumn * imgHeightInMm;
 
+                // Beräkna det överblivna utrymmet och använd det för padding mellan bilder
+                const horizontalPadding = (availableWidth - totalLabelsWidth) / (labelsPerRow + 1);
+                const verticalPadding = (availableHeight - totalLabelsHeight) / (labelsPerColumn + 1);
+
+                let xPos = margin + horizontalPadding;
+                let yPos = margin + verticalPadding;
+
+                // Iterera över rader och kolumner för att placera bilderna
                 for (let row = 0; row < labelsPerColumn; row++) {
                     for (let col = 0; col < labelsPerRow; col++) {
                         pdf.addImage(pngDataUrl, 'PNG', xPos, yPos, imgWidthInMm, imgHeightInMm);
-                        xPos += imgWidthInMm;
+                        xPos += imgWidthInMm + horizontalPadding; // Lägg till horisontell padding mellan bilder
                     }
-                    xPos = horizontalPadding;
-                    yPos += imgHeightInMm;
+                    xPos = margin + horizontalPadding; // Återställ x-position för nästa rad
+                    yPos += imgHeightInMm + verticalPadding; // Lägg till vertikal padding mellan rader
                 }
             } else if (labelSize === 'single') {
                 // Om "En bild" är vald: Lägg till en centrerad bild på sidan
@@ -1747,6 +1760,8 @@ document.getElementById('savePdfButton').addEventListener('click', function() {
         };
     });
 });
+
+
 
 
 
