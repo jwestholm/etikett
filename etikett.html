@@ -755,13 +755,10 @@ input[type="number"]:focus {
 		 <!-- Spara som PDF-knappen -->
 
 			<div class="vertical-divider"></div>
-			<label for="labelSize">Välj etikettstorlek:</label>
-			<select id="labelSize">
-			  <option value="18x9">18 cm x 9 cm (3per A4)</option>
-			  <option value="16x8">16 cm x 8 cm (3per A4)</option>
-			  <option value="14x7">14 cm x 7 cm (4per A4)</option>
-			  <option value="12x6">12 cm x 6 cm (4per A4)</option> 
-			  <option value="10x5">10 cm x 5 cm (5per A4)</option> 
+			<label for="labelSize">Välj PDF format:</label>
+			<select id="labelSize" class="styled-dropdown">
+				<option value="fill" selected="">Fyll A4</option>
+				<option value="single">En bild</option>
 			</select>
         <button id="savePdfButton" class="action-button save-pdf-btn"><i class="fas fa-file-pdf"></i> Spara som A4 PDF</button>
 		<div class="vertical-divider"></div>
@@ -993,7 +990,7 @@ function addCuttingRect() {
         canvas.bringForward(cuttingRect); // Men fortfarande över bakgrunden
     }
     cuttingRectVisible = true;
-    document.getElementById('toggleCuttingRectButton').classList.add('active');
+    document.getElementById('toggleCuttingRect').classList.add('active');
 }
 
 
@@ -1004,7 +1001,7 @@ function removeCuttingRect() {
         cuttingRect = null;
         cuttingRectVisible = false;
 		 // Uppdatera knappen till inaktiv
-    document.getElementById('toggleCuttingRect').classList.remove('active');
+		document.getElementById('toggleCuttingRect').classList.remove('active');
     }
 	   
 }
@@ -1013,10 +1010,11 @@ function removeCuttingRect() {
 function hideCuttingRect() {
     if (cuttingRect) {
         cuttingRect.set('visible', false); // Döljer cuttingRect
+		canvas.discardActiveObject(); // Avmarkera cuttingRect
         canvas.renderAll();
         cuttingRectVisible = false;
 		 // Uppdatera knappen till inaktiv
-			document.getElementById('toggleCuttingRect').classList.remove('active');		
+		document.getElementById('toggleCuttingRect').classList.remove('active');		
     }
 	
 }
@@ -1263,19 +1261,15 @@ function resetQrCode() {
             opt.e.stopPropagation();
         });
 
-        // Spara bild
-        document.getElementById('saveButton').addEventListener('click', function() {
-            const currentZoom = canvas.getZoom(); // Spara nuvarande zoom-nivå
-            canvas.setZoom(1); // Temporärt sätt zoom till 100% för att spara bilden
-
-            const image = canvas.toDataURL('image/png');
-            const link = document.createElement('a');
-            link.href = image;
-            link.download = 'beer_label.png';
-            link.click();
-
-            canvas.setZoom(currentZoom); // Återställ zoom-nivån
-        });
+// Använd för PNG-knappen
+document.getElementById('saveButton').addEventListener('click', function() {
+    generateExportCanvas('png', function(pngData) {
+        const link = document.createElement('a');
+        link.href = pngData;
+        link.download = 'exported_image.png';
+        link.click();
+    });
+});
 
         // Lägg till nytt textobjekt
         document.getElementById('addTextButton').addEventListener('click', function() {
@@ -1698,78 +1692,68 @@ document.getElementById('imageUpload').addEventListener('change', function(event
 //Spara som PDF
 // Kontrollera att jsPDF är tillgängligt från fönstret (window)
 const { jsPDF } = window.jspdf;
+
+// Spara som PDF med sidbrytning om bilden är för stor
 document.getElementById('savePdfButton').addEventListener('click', function() {
-    const fabricCanvas = canvas; // Hämta fabric-instansen av canvas
+    const labelSize = document.getElementById('labelSize').value; // Hämta valet från dropdown-menyn
 
-    // Steg 1: Hämta valt etikettstorlek
-    const selectedSize = document.getElementById('labelSize').value; // Hämta användarens val
-    let imgWidth, imgHeight;
-
-    // Justera bredd och höjd baserat på användarens val
-    if (selectedSize === "18x9") {
-        imgWidth = 180;
-        imgHeight = 90;
-    } else if (selectedSize === "16x8") {
-        imgWidth = 160;
-        imgHeight = 80;
-    } else if (selectedSize === "14x7") {
-        imgWidth = 140;
-        imgHeight = 70;
-    } else if (selectedSize === "12x6") {
-        imgWidth = 120;
-        imgHeight = 60;
-    } else if (selectedSize === "10x5") {
-        imgWidth = 100;
-        imgHeight = 50;
-    }
-
-    const pageWidth = 210; // A4 bredd i mm
-    const availableHeight = 297; // A4 höjd i mm
-    const margin = 2; // Marginal mellan etiketterna
-
-    // Räkna ut det totala utrymmet som etiketterna kommer ta upp (inklusive marginaler)
-    let etiketterPerSida = Math.floor((availableHeight - margin) / (imgHeight + margin));
-    const totalEtikettHojd = etiketterPerSida * imgHeight + (etiketterPerSida - 1) * margin;
-
-    // Räkna ut det lediga utrymmet ovanför och under etiketterna
-    let yPosition = (availableHeight - totalEtikettHojd) / 2; // Centrera i höjdled
-
-    // Steg 2: Tillfälligt öka canvasens storlek till 100% (2000x1000px) och rensa selekterade objekt
-    const originalZoom = fabricCanvas.getZoom(); // Spara den nuvarande zoomnivån
-    const activeObject = fabricCanvas.getActiveObject(); // Spara aktivt objekt om det finns
-    fabricCanvas.discardActiveObject(); // Avmarkera alla objekt
-    fabricCanvas.setZoom(1); // Sätt zoom till 100%
-    fabricCanvas.renderAll(); // Rendera om canvasen utan valda objekt
-
-    // Använd html2canvas för att konvertera canvas till en bild
-    html2canvas(fabricCanvas.wrapperEl).then(function(canvas) {
-        const imgData = canvas.toDataURL('image/png'); // Konvertera canvas till PNG
-
-        // Skapa ett nytt PDF-dokument med jsPDF
+    // Generera PNG via generateExportCanvas
+    generateExportCanvas('png', function(pngDataUrl) {
         const pdf = new jsPDF('portrait', 'mm', 'a4');
 
-        // Loop för att lägga till etiketter baserat på storlek och tillgängligt utrymme
-        for (let i = 0; i < etiketterPerSida; i++) {
-            // Lägg till etiketten på rätt plats
-            pdf.addImage(imgData, 'PNG', (pageWidth - imgWidth) / 2, yPosition, imgWidth, imgHeight);
+        const img = new Image();
+        img.src = pngDataUrl;
 
-            // Justera y-position för nästa etikett
-            yPosition += imgHeight + margin;
-        }
+        img.onload = function() {
+            const imgWidthInPixels = img.width;  // Bredden på PNG-bilden i pixlar
+            const imgHeightInPixels = img.height; // Höjden på PNG-bilden i pixlar
 
-        // Spara PDF-filen
-        pdf.save('etiketter.pdf');
+            const dpi = 280; // Använd DPI för att få rätt storlek i mm
+            const imgWidthInMm = (imgWidthInPixels / dpi) * 25.4;
+            const imgHeightInMm = (imgHeightInPixels / dpi) * 25.4;
 
-        // Återställ canvasen till ursprunglig zoom och selekterade objekt
-        fabricCanvas.setZoom(originalZoom); // Återställ zoom
-        if (activeObject) {
-            fabricCanvas.setActiveObject(activeObject); // Återställ valda objekt om det finns
-        }
-        fabricCanvas.renderAll(); // Rendera om canvasen
-    }).catch(function(error) {
-        console.error("Ett fel inträffade när PDF genererades:", error);
+            const pageWidth = pdf.internal.pageSize.width;
+            const pageHeight = pdf.internal.pageSize.height;
+
+            if (labelSize === 'fill') {
+                // Om "Fyll A4" är vald: Lägg till flera etiketter på sidan
+                const labelsPerRow = Math.floor(pageWidth / imgWidthInMm);
+                const labelsPerColumn = Math.floor(pageHeight / imgHeightInMm);
+
+                const horizontalPadding = (pageWidth - (labelsPerRow * imgWidthInMm)) / 2;
+                const verticalPadding = (pageHeight - (labelsPerColumn * imgHeightInMm)) / 2;
+
+                let xPos = horizontalPadding;
+                let yPos = verticalPadding;
+
+                for (let row = 0; row < labelsPerColumn; row++) {
+                    for (let col = 0; col < labelsPerRow; col++) {
+                        pdf.addImage(pngDataUrl, 'PNG', xPos, yPos, imgWidthInMm, imgHeightInMm);
+                        xPos += imgWidthInMm;
+                    }
+                    xPos = horizontalPadding;
+                    yPos += imgHeightInMm;
+                }
+            } else if (labelSize === 'single') {
+                // Om "En bild" är vald: Lägg till en centrerad bild på sidan
+                const xOffset = (pageWidth - imgWidthInMm) / 2;
+                const yOffset = (pageHeight - imgHeightInMm) / 2;
+
+                pdf.addImage(pngDataUrl, 'PNG', xOffset, yOffset, imgWidthInMm, imgHeightInMm);
+            }
+
+            // Spara PDF-filen
+            pdf.save('exported_labels.pdf');
+        };
     });
 });
+
+
+
+
+
+
+
 
 
 document.getElementById('exportJsonButton').addEventListener('click', function() {
@@ -1789,6 +1773,9 @@ document.getElementById('exportJsonButton').addEventListener('click', function()
     link.download = 'canvas_data.json';  // Filnamn för den exporterade JSON-filen
     link.click();
 });
+
+
+
 
 
 canvas.on('object:modified', function(e) {
@@ -2037,6 +2024,181 @@ function init_images() {
         }
     });
 }
+
+
+
+// Generisk funktion som skapar en beskärd PNG baserat på cuttingRect
+function generateExportCanvas(format, callback) {
+    const originalZoom = canvas.getZoom();
+    const originalCuttingRectVisibility = cuttingRect ? cuttingRect.visible : false;
+
+    // Spara ursprungliga skalvärden och positioner för alla objekt
+    const originalScales = canvas.getObjects().map(obj => ({
+        scaleX: obj.scaleX,
+        scaleY: obj.scaleY,
+        left: obj.left,
+        top: obj.top
+    }));
+
+    // Sätt zoom till 100 % för export
+    canvas.setZoom(1);
+    canvas.renderAll(); // Rendera om canvasen direkt efter zoomning
+
+    // Döljer cuttingRect under exporten om den är synlig
+    if (cuttingRect && cuttingRect.visible) {
+        cuttingRect.set('visible', false);
+        canvas.renderAll(); // Rendera om canvasen efter att cuttingRect har dolts
+    }
+
+    const left = cuttingRect ? cuttingRect.left || 0 : 0;
+    const top = cuttingRect ? cuttingRect.top || 0 : 0;
+    const width = cuttingRect ? cuttingRect.width * cuttingRect.scaleX : 2000;  // Default till 2000px
+    const height = cuttingRect ? cuttingRect.height * cuttingRect.scaleY : 1000; // Default till 1000px
+
+    // Skapa en ny temporär canvas med beskuren storlek
+    const tempCanvas = new fabric.Canvas(null, {
+        width: width,
+        height: height,
+    });
+
+    // Justera bakgrundsbilden om den finns
+    if (canvas.backgroundImage) {
+        const clonedBackgroundImage = fabric.util.object.clone(canvas.backgroundImage);
+        clonedBackgroundImage.left -= left;
+        clonedBackgroundImage.top -= top;
+        tempCanvas.setBackgroundImage(clonedBackgroundImage, tempCanvas.renderAll.bind(tempCanvas));
+    }
+
+    // Kopiera objekt från originalcanvasen till temporära canvasen
+    canvas.getObjects().forEach(function(obj) {
+        const clonedObj = fabric.util.object.clone(obj);
+        clonedObj.left -= left;  // Justera objekten så de hamnar rätt i den nya beskurna canvasen
+        clonedObj.top -= top;
+
+        // Kontrollera att objektet hamnar inom den nya canvasens dimensioner
+        if (clonedObj.left + clonedObj.width * clonedObj.scaleX > 0 &&
+            clonedObj.top + clonedObj.height * clonedObj.scaleY > 0 &&
+            clonedObj.left < width &&
+            clonedObj.top < height) {
+            tempCanvas.add(clonedObj);
+        }
+    });
+
+    tempCanvas.renderAll();
+
+    // Hantering av olika exportformat
+    if (format === 'png') {
+        // Exportera canvasen som en PNG-data URL
+        callback(tempCanvas.toDataURL('image/png'));
+    }
+
+    // Ta bort tempCanvas och frigör minne
+    tempCanvas.dispose();
+
+    // Återställ ursprungliga skalning och positioner för alla objekt
+    canvas.getObjects().forEach((obj, index) => {
+        obj.scaleX = originalScales[index].scaleX;
+        obj.scaleY = originalScales[index].scaleY;
+        obj.left = originalScales[index].left;
+        obj.top = originalScales[index].top;
+    });
+
+    // Återställ ursprungliga zoom
+    canvas.setZoom(originalZoom);
+    canvas.renderAll(); // Rendera om canvasen direkt efter att zoomnivån återställts
+
+    // Återställ cuttingRect's synlighet
+    if (cuttingRect) {
+        cuttingRect.set('visible', originalCuttingRectVisibility);
+    }
+    canvas.renderAll(); // Rendera om canvasen en sista gång efter att cuttingRect synligheten återställts
+}
+
+
+
+
+// Exportera canvasen som PNG
+function exportToPNG() {
+    generateExportCanvas(function(pngData) {
+        // Skapa en länk för nedladdning av PNG
+        const link = document.createElement('a');
+        link.href = pngData;
+        link.download = 'exported_image.png';
+        link.click();
+    });
+}
+// Exportera canvasen som PDF med hänsyn till droplistans värde
+function exportToPDF() {
+    const labelSize = document.getElementById('labelSize').value; // Hämta användarens val av etikettstorlek
+    let imgWidth, imgHeight;
+
+    // Justera storlek baserat på användarens val eller maximera antal etiketter per sida
+    if (labelSize === "18x9") {
+        imgWidth = 180;
+        imgHeight = 90;
+    } else if (labelSize === "16x8") {
+        imgWidth = 160;
+        imgHeight = 80;
+    } else if (labelSize === "14x7") {
+        imgWidth = 140;
+        imgHeight = 70;
+    } else if (labelSize === "12x6") {
+        imgWidth = 120;
+        imgHeight = 60;
+    } else if (labelSize === "10x5") {
+        imgWidth = 100;
+        imgHeight = 50;
+    } else {
+        // Om inget val har gjorts, maximera antal etiketter per sida
+        imgWidth = 100;
+        imgHeight = 50;
+    }
+
+    const pageWidth = 210; // A4 bredd i mm
+    const availableHeight = 297; // A4 höjd i mm
+    const margin = 2; // Marginal mellan etiketterna
+
+    // Räkna ut hur många etiketter som får plats på en A4-sida baserat på storlek och marginal
+    const etiketterPerRad = Math.floor((pageWidth - margin) / (imgWidth + margin));
+    const etiketterPerKolumn = Math.floor((availableHeight - margin) / (imgHeight + margin));
+    const totalEtiketterPerSida = etiketterPerRad * etiketterPerKolumn;
+
+    generateExportCanvas(function(pngData) {
+        // Skapa ett PDF-dokument med jsPDF
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF('portrait', 'mm', 'a4');
+
+        let currentX = margin;
+        let currentY = margin;
+
+        // Lägg till etiketter på sidan och hantera nya sidor om det behövs
+        for (let i = 0; i < totalEtiketterPerSida; i++) {
+            // Lägg till PNG-bilden på PDF-sidan
+            pdf.addImage(pngData, 'PNG', currentX, currentY, imgWidth, imgHeight);
+
+            // Uppdatera positionen för nästa etikett
+            currentX += imgWidth + margin;
+
+            // Gå till nästa rad om vi når slutet av en rad
+            if (currentX + imgWidth + margin > pageWidth) {
+                currentX = margin;
+                currentY += imgHeight + margin;
+            }
+
+            // Om vi når slutet av en sida, skapa en ny sida i PDF
+            if (currentY + imgHeight + margin > availableHeight) {
+                pdf.addPage();
+                currentX = margin;
+                currentY = margin;
+            }
+        }
+
+        // Spara PDF-filen
+        pdf.save('exported_label.pdf');
+    });
+}
+
+
 
 //Pixa
 function showPixabayModal() {
