@@ -546,17 +546,17 @@ input[type="number"]:focus {
 
 <div class="modal" id="pixabay-modal-content" style="display: none;">
 <div class="pixabay-modal-content">
-            <span class="close-button" onclick="hidePixabayModal()">&times;</span>
+            <span class="close-button" onclick="hidePixabayModal()">×</span>
 			<h3>Pixabay</h3>
 			
 			<div id="search-panel">
-			<input type="text" id="query" placeholder="Sök efter bilder..." class="styled-dropdown"/>
+			<input type="text" id="query" placeholder="Sök efter bilder..." class="styled-dropdown">
 
 			<!-- Dropdown för image_type -->
 			<label for="imageType">Bildtyp:</label>
 			<select id="imageType" class="styled-dropdown">
 				<option value="all">Alla</option>
-				<option value="photo" selected>Fotografier</option>
+				<option value="photo" selected="">Fotografier</option>
 				<option value="illustration">Illustrationer</option>
 				<option value="vector">Vektorer</option>
 			</select>
@@ -580,7 +580,7 @@ input[type="number"]:focus {
 
 			<!-- Knapp för order -->
 			<label for="orderToggle">Sortera:</label>
-			<button id="orderToggle"  class="action-button" data-order="popular">Populäraste</button>
+			<button id="orderToggle" class="action-button" data-order="popular">Populäraste</button>
 
 			<!-- Knapp för safesearch -->
 			<label for="safesearchToggle">Safesearch:</label>
@@ -599,10 +599,10 @@ input[type="number"]:focus {
 		<hr>
 		<!-- Sidhänvisningspanel -->
 		<div id="pagination-panel">
-			<button id="prevPageButton" class="action-button" disabled>Föregående</button>
+			<button id="prevPageButton" class="action-button" disabled="">Föregående</button>
 			<span id="currentPage">1</span> av <span id="totalPages">1</span>
-			<button id="nextPageButton" class="action-button" disabled>Nästa</button>
-			<input type="number" id="pageInput" class="styled-dropdown" min="1" value="1" />
+			<button id="nextPageButton" class="action-button" disabled="">Nästa</button>
+			<input type="number" id="pageInput" class="styled-dropdown" min="1" value="1">
 			<button id="goToPageButton" class="action-button">Gå till sida</button>
 		</div>
 
@@ -631,6 +631,8 @@ input[type="number"]:focus {
 				<option value="syla">Syla (Pravda)</option>								
 				<option value="anyuta">Anyuta (Vivant Brewery)</option>								
 				<option value="resist">Resist Lager (Slate Farm Brewery)</option>												
+				<option value="resolvefreedom">Resolve Freedom - Kellerbier (42 North)</option>				
+				<option value="resolveipk">Resolve Freedom - IPK (2085)</option>					
 			</select>
 			<span>eller</span>
 			<button id="uploadImageButton" class="action-button upload-image-btn"><i class="fas fa-folder-open"></i>Välj egen bakgrund</button>
@@ -813,7 +815,10 @@ input[type="number"]:focus {
 			frau: 'https://babd87698a.clvaw-cdnwnd.com/7a7c311145e9c02ee96ff83ba2f8f5e9/200000451-72b4e72b50/frau.json?ph=babd87698a',
 			syla: 'https://babd87698a.clvaw-cdnwnd.com/7a7c311145e9c02ee96ff83ba2f8f5e9/200000453-dd165dd167/syla.json?ph=babd87698a',
 			anyuta: 'https://babd87698a.clvaw-cdnwnd.com/7a7c311145e9c02ee96ff83ba2f8f5e9/200000462-2ab2f2ab32/anyuta.json?ph=babd87698a',
-			resist: 'https://babd87698a.clvaw-cdnwnd.com/7a7c311145e9c02ee96ff83ba2f8f5e9/200000471-97af297af4/resistlager.json?ph=babd87698a'						
+			resist: 'https://babd87698a.clvaw-cdnwnd.com/7a7c311145e9c02ee96ff83ba2f8f5e9/200000471-97af297af4/resistlager.json?ph=babd87698a',
+			resolvefreedom: 'https://babd87698a.clvaw-cdnwnd.com/7a7c311145e9c02ee96ff83ba2f8f5e9/200000476-8201d82020/resolverfeedom.json?ph=babd87698a',
+			resolveipk: 'https://babd87698a.clvaw-cdnwnd.com/7a7c311145e9c02ee96ff83ba2f8f5e9/200000477-0ef030ef04/resolveipk.json?ph=babd87698a'
+			
 		};
         const beers = {};
 
@@ -2041,6 +2046,16 @@ function init_images() {
 			beers.resist.objects.find(obj => obj.name === 'qrCode').src = qroperationaid;
             console.log('Bakgrundsbild för Resist Lager laddad');			
 
+	    const resolvefreedomBackground = await loadBase64FromUrl('https://babd87698a.clvaw-cdnwnd.com/7a7c311145e9c02ee96ff83ba2f8f5e9/200000472-2625226254/resolvefredom.png?ph=babd87698a', 'Resolve Freedom Kellerbier');
+            beers.resolvefreedom.backgroundImage.src = resolvefreedomBackground;
+			beers.resolvefreedom.objects.find(obj => obj.name === 'qrCode').src = qrsvenskbyborna;
+            console.log('Bakgrundsbild för Resolve Freedom Kellerbier');			
+
+	    const resolveipkBackground = await loadBase64FromUrl('https://babd87698a.clvaw-cdnwnd.com/7a7c311145e9c02ee96ff83ba2f8f5e9/200000474-bfb04bfb06/resolveipk.png?ph=babd87698a', 'Resolve Freedom IPK');
+            beers.resolveipk.backgroundImage.src = resolveipkBackground;
+			beers.resolveipk.objects.find(obj => obj.name === 'qrCode').src = qrsvenskbyborna;
+            console.log('Bakgrundsbild för Resolve Freedom IPK');	
+		
             hideLoadingModal(); // Dölj modalen när alla bilder är laddade
             // När alla bilder är laddade, lös promisen
             resolve();
@@ -2510,6 +2525,3 @@ function getQueryParam(param) {
 }
 
     </script>
-
-
-
