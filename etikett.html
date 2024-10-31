@@ -616,7 +616,7 @@ input[type="number"]:focus {
 		<div class="group-box">
 			<div class="text-controls">		
 			
-			<label for="templateSelection">Välj mall:</label>
+			<label for="templateSelection">Färdiga etiketter</label>
 			<select id="templateSelection" class="styled-dropdown">
 				<option value="">Ingen</option>
 				<option value="dronarhamnd" selected="">Drönarhämnd (Pravda)</option>
@@ -634,13 +634,8 @@ input[type="number"]:focus {
 				<option value="resolvefreedom">Resolve Freedom - Kellerbier (42 North)</option>				
 				<option value="resolveipk">Resolve Freedom - IPK (2085)</option>					
 			</select>
-			<span>eller</span>
-			<button id="uploadImageButton" class="action-button upload-image-btn"><i class="fas fa-folder-open"></i>Välj egen bakgrund</button>
-			<button id="pixabaySearchButton" class="action-button search-image-btn"><i class="fas fa-search"></i> Sök på Pixabay</button>
-
-			<input type="file" id="imageUpload" accept="image/png, image/jpeg" style="display: none;">
 			<div class="vertical-divider"></div>
-			<label for="qrCodeSelection">Välj Swish QR-kod</label>
+			<label for="qrCodeSelection">Swish QR-kod</label>
 			<select id="qrCodeSelection" class="styled-dropdown">
 				<option value="">Ingen QR-kod</option>
 				<option value="drones2ukraine">Drones2Ukraine</option>
@@ -655,6 +650,12 @@ input[type="number"]:focus {
 				<option value="svenskbyborna">Svenskbyborna</option>
     				
 			</select>
+			<div class="vertical-divider"></div>
+			<input type="file" id="imageUpload" accept="image/png, image/jpeg" style="display: none;">
+			<button id="uploadImageButton" class="action-button upload-image-btn"><i class="fas fa-folder-open"></i>Egen bakgrund</button>
+			<button id="randomImageButton" class="action-button"><i class="fas fa-random"></i>Slumpad bakgrund</button>
+			<button id="pixabaySearchButton" class="action-button search-image-btn"><i class="fas fa-search"></i> Sök på Pixabay</button>
+
 			</div>
 		</div>
 		<div class="group-box">
@@ -854,6 +855,35 @@ function init_beers() {
     // Optionally, hide the modal after all beers have been loaded
     hideLoadingModal();
 }
+
+
+// JavaScript för att hämta och sätta slumpmässig bild från Picsum
+document.getElementById('randomImageButton').addEventListener('click', async function () {
+    try {
+        const response = await fetch('https://picsum.photos/2000/1000');
+        const blob = await response.blob();
+        const reader = new FileReader();
+
+        reader.onloadend = function () {
+            const base64Data = reader.result;
+            fabric.Image.fromURL(base64Data, function (img) {
+                img.set({
+                    scaleX: canvas.width / img.width,
+                    scaleY: canvas.height / img.height,
+                    originX: 'left',
+                    originY: 'top'
+                });
+                canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas));
+            });
+        };
+
+        reader.readAsDataURL(blob);
+    } catch (error) {
+        console.error("Något gick fel när bilden hämtades:", error);
+    }
+});
+
+
 canvas.on('object:modified', function(e) {
     const obj = e.target;
 
@@ -883,6 +913,46 @@ canvas.on('object:modified', function(e) {
         canvas.renderAll();
     }
 });
+// Hantera QR-kodens position och kontrollera att den inte hamnar utanför canvasen
+function restrictQRCodeToCanvas() {
+    const qrCode = canvas.getObjects().find(obj => obj.name === 'qrCode');
+
+    if (qrCode) {
+        const canvasWidth = canvas.getWidth();
+        const canvasHeight = canvas.getHeight();
+
+        // Kontrollera om QR-koden går utanför canvasens kanter och justera positionen
+        if (qrCode.left < 0) {
+            qrCode.set({ left: 0 });
+        }
+        if (qrCode.top < 0) {
+            qrCode.set({ top: 0 });
+        }
+        if (qrCode.left + qrCode.width * qrCode.scaleX > canvasWidth) {
+            qrCode.set({ left: canvasWidth - qrCode.width * qrCode.scaleX });
+        }
+        if (qrCode.top + qrCode.height * qrCode.scaleY > canvasHeight) {
+            qrCode.set({ top: canvasHeight - qrCode.height * qrCode.scaleY });
+        }
+
+        // Uppdatera canvasen för att visa justeringarna
+        canvas.renderAll();
+    }
+}
+
+// Lyssna efter QR-kodens flytt eller skaländringar och begränsa dess position
+canvas.on('object:moving', function (e) {
+    if (e.target.name === 'qrCode') {
+        restrictQRCodeToCanvas();
+    }
+});
+
+canvas.on('object:scaling', function (e) {
+    if (e.target.name === 'qrCode') {
+        restrictQRCodeToCanvas();
+    }
+});
+
 
 canvas.on('object:scaling', function(e) {
     let obj = e.target;
@@ -1231,6 +1301,11 @@ document.getElementById('templateSelection').addEventListener('change', function
         // Ladda hela JSON-objektet på canvasen
         canvas.loadFromJSON(beerJson, function() {
             canvas.renderAll(); // Rendera canvasen när allt har laddats
+			canvas.getObjects().find(obj => obj.name === 'qrCode').lockScalingX = true;
+			canvas.getObjects().find(obj => obj.name === 'qrCode').lockScalingY = true;
+			canvas.getObjects().find(obj => obj.name === 'qrCode').lockRotation = true; 
+			canvas.getObjects().find(obj => obj.name === 'qrCode').img.hasControls = false;
+			
 			// Återställ cuttingRect om den var aktiv tidigare
             if (cuttingRectToggled) {
                 addCuttingRect();
@@ -2491,6 +2566,10 @@ window.onload = function() {
             // Ladda canvasen med JSON-data från den valda mallen
             canvas.loadFromJSON(beerJson, function() {
                 canvas.renderAll(); // Rendera canvasen när allt har laddats
+				canvas.getObjects().find(obj => obj.name === 'qrCode').lockScalingX = true;
+				canvas.getObjects().find(obj => obj.name === 'qrCode').lockScalingY = true;				
+				canvas.getObjects().find(obj => obj.name === 'qrCode').lockRotation = true; 
+				canvas.getObjects().find(obj => obj.name === 'qrCode').img.hasControls = false;
 				resetQrCode(); // Se till att rätt QR-kod är laddad och synlig
 
             });
