@@ -714,11 +714,6 @@ input[type="number"]:focus {
 				
 			</div>
 
-			
-<!--			<label><input type="checkbox" id="boldCheckbox"> Fet</label>
-			<label><input type="checkbox" id="italicCheckbox"> Kursiv</label>
-			<label><input type="checkbox" id="underlineCheckbox"> Understruken</label>
--->
 			<input type="color" class="color-button" id="colorPicker" value="#000000">
 
 			<input type="number" id="transparency" min="0" max="100" value="100">
@@ -756,21 +751,24 @@ input[type="number"]:focus {
 		
 		<div class="group-box">
 		<div class="text-controls">		
-		<button id="toggleCuttingRect" class="action-button"><i class="fas fa-cut"></i> Visa/Utan skärkant</button>
+		<button id="toggleCuttingRect" class="action-button"><i class="fas fa-cut"></i>Skärkant</button>
 
-		<button id="saveButton" class="action-button save-btn"><i class="fas fa-save"></i>Spara som PNG</button>
+		<button id="saveButton" class="action-button save-btn"><i class="fas fa-save"></i>Spara PNG</button>
 		 <!-- Spara som PDF-knappen -->
 
 			<div class="vertical-divider"></div>
-			<label for="labelSize">Välj PDF format:</label>
+			<label for="labelSize">PDF format:</label>
 			<select id="labelSize" class="styled-dropdown">
 				<option value="fill" selected="">Fyll A4</option>
 				<option value="single">En bild</option>
 			</select>
-        <button id="savePdfButton" class="action-button save-pdf-btn"><i class="fas fa-file-pdf"></i> Spara som A4 PDF</button>
+        <button id="savePdfButton" class="action-button save-pdf-btn"><i class="fas fa-file-pdf"></i>Spara PDF</button>
 		<div class="vertical-divider"></div>
 
-		<button id="exportJsonButton" class="action-button">Exportera som JSON</button>
+		<button id="exportJsonButton" class="action-button"><i class="fas fa-download"></i>Exportera</button>
+		<input type="file" id="loadButton" accept=".bfu" style="display: none;">
+		<button onclick="document.getElementById('loadButton').click()" class="action-button"><i class="fa fa-upload"></i>Importera</button>
+		
 
 		</div>
 		</div>
@@ -1859,25 +1857,88 @@ document.getElementById('savePdfButton').addEventListener('click', function() {
 
 
 
+// Exportfunktion med QR-kod och cuttingRect-hantering
 document.getElementById('exportJsonButton').addEventListener('click', function() {
-    // Hämta hela canvasens JSON-data
-    const canvasData = canvas.toJSON();
+    // Kontrollera om cuttingRect är synlig, och visa temporärt om den är dold
+    const wasCuttingRectVisible = cuttingRect && cuttingRect.visible;
+
+    if (!cuttingRect) {
+        addCuttingRect();
+    } else if (!wasCuttingRectVisible) {
+        showCuttingRect();
+    }
+
+    // Lägg till 'name' som en anpassad egenskap i JSON-exporten
+    const canvasData = canvas.toJSON(['name']);
+
+    // Hitta QR-kodsobjektet i canvasData
+    const qrCodeObject = canvasData.objects.find(obj => obj.name === 'qrCode');
+    if (qrCodeObject) {
+        const qrCodeSelection = document.getElementById('qrCodeSelection');
+        if (qrCodeSelection && qrCodeSelection.value) {
+            qrCodeObject.src = qrCodeSelection.value; // Sätt källan till valt QR-kodsnamn
+        } else {
+            console.error("QR-kodsdropdown saknas eller har inget värde");
+        }
+    } else {
+        console.warn("QR-kodsobjektet hittades inte i canvasData");
+    }
 
     // Omvandla JSON-objektet till en sträng för enkel kopiering
-    const jsonString = JSON.stringify(canvasData, null, 2); // 2 ger bättre formatering
-
-    // Visa JSON-strängen för att enkelt kopiera
-    console.log(jsonString);
+    const jsonString = JSON.stringify(canvasData, null, 2);
 
     // Skapa ett nedladdningsbart JSON-dokument
     const blob = new Blob([jsonString], { type: 'application/json' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = 'canvas_data.json';  // Filnamn för den exporterade JSON-filen
+    link.download = 'etikett.bfu';
     link.click();
+
+    // Återställ cuttingRect till ursprungligt synlighetstillstånd
+    if (!wasCuttingRectVisible && cuttingRect) {
+        hideCuttingRect();
+    }
 });
 
+// Importfunktion med QR-kod och cuttingRect-hantering
+document.getElementById('loadButton').addEventListener('change', function(event) {
+    const file = event.target.files[0];
+    if (!file) return;
 
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const loadedData = JSON.parse(e.target.result);
+
+        // Hitta QR-kodsobjektet i den inlästa datan
+        const qrCodeObject = loadedData.objects.find(obj => obj.name === 'qrCode');
+        if (qrCodeObject && qrCodeObject.src) {
+            const qrCodeName = qrCodeObject.src;
+            if (qrCodes[qrCodeName]) {
+                qrCodeObject.src = qrCodes[qrCodeName].image;
+            } else {
+                console.warn("QR-kodens namn matchar inte något i qrCodes.");
+            }
+        }
+
+        // Ladda in den modifierade datan i canvasen
+        canvas.loadFromJSON(loadedData, function() {
+            // Kontrollera om cuttingRect finns, annars skapa den
+            cuttingRect = canvas.getObjects().find(obj => obj.name === 'cuttingRect');
+            if (!cuttingRect) {
+                addCuttingRect();
+            } else {
+                cuttingRect.set('visible', false); // Döljer cuttingRect som standard
+            }
+            canvas.renderAll();
+            console.log("Canvas laddades med uppdaterad QR-kod och cuttingRect.");
+        });
+
+        // Återställ filvalet och templateSelection-dropdown
+        event.target.value = "";
+        document.getElementById("templateSelection").value = "";
+    };
+    reader.readAsText(file);
+});
 
 
 
