@@ -619,22 +619,30 @@ input[type="number"]:focus {
 			<label for="templateSelection">Färdiga etiketter</label>
 			<select id="templateSelection" class="styled-dropdown">
 				<option value="">Ingen</option>
-				<option value="dronarhamnd" selected="">Drönarhämnd (Pravda)</option>
-				<option value="gravity">GRAVITY (Ten Men)</option>
-				<option value="blagulaOlen">Blågula Ölen (BFU)</option>
-				<option value="punchputin">Punch Putin with a SMASH! (BFU)</option>
-				<option value="sommarol">Sommarölen (BFU)</option>
-				<option value="putinhuilo">Putin Huilo (Pravda)</option>
-				<option value="redeyes">Red Eyes (Pravda)</option>		
-				<option value="frau">Frau Ribbentrop (Pravda)</option>
-				<option value="fromsan">From San to Don (Pravda)</option>				
-				<option value="syla">Syla (Pravda)</option>								
-				<option value="anyuta">Anyuta (Vivant Brewery)</option>								
-				<option value="resist">Resist Lager (Slate Farm Brewery)</option>												
-				<option value="resolvefreedom">Resolve Freedom - Kellerbier (42 North)</option>				
-				<option value="resolveipk">Resolve Freedom - IPK (2085)</option>					
-				<option value="solidarity">Solidarity Brew - RESIST - Ukrainian Anti-Imperial Stout (Drinkers for Ukraine)</option>				
-				<option value="mpir">Mpiя Mriya IPA (BRLO / Underwood)</option>								
+				<optgroup label="Brygg för Ukraina">
+					<option value="blagulaOlen">Blågula Ölen (BFU)</option>
+					<option value="punchputin">Punch Putin with a SMASH! (BFU)</option>
+					<option value="sommarol">Sommarölen (BFU)</option>
+   			    </optgroup>
+				<optgroup label="Ten Men Brewery">
+					<option value="gravity">GRAVITY (Ten Men)</option>
+   			    </optgroup>
+				<optgroup label="Pravda Brewery">
+					<option value="dronarhamnd" selected="">Drönarhämnd</option>
+					<option value="putinhuilo">Putin Huilo</option>
+					<option value="redeyes">Red Eyes</option>		
+					<option value="frau">Frau Ribbentrop</option>
+					<option value="fromsan">From San to Don</option>				
+					<option value="syla">Syla</option>								
+   			    </optgroup>
+				<optgroup label="Andra bryggerier">
+					<option value="anyuta">Anyuta (Vivant Brewery)</option>								
+					<option value="resist">Resist Lager (Slate Farm Brewery)</option>												
+					<option value="resolvefreedom">Resolve Freedom - Kellerbier (42 North)</option>				
+					<option value="resolveipk">Resolve Freedom - IPK (2085)</option>					
+					<option value="solidarity">Solidarity Brew - RESIST - Ukrainian Anti-Imperial Stout (Drinkers for Ukraine)</option>				
+					<option value="mpir">Mpiя Mriya IPA (BRLO / Underwood)</option>								
+				</optgroup>
 			</select>
 			<div class="vertical-divider"></div>
 			<label for="qrCodeSelection">Swish QR-kod</label>
@@ -669,8 +677,10 @@ input[type="number"]:focus {
 		</div>
 			<div class="vertical-divider"></div>
 			
-			<label for="fontSelector">Font</label>
-			<select id="fontSelector">
+		<label for="fontSelector">Font</label>
+		<select id="fontSelector">
+			<!-- Sans-serif fonts -->
+			<optgroup label="Sans-serif">
 				<option value="Arial" style="font-family: Arial;">Arial</option>
 				<option value="Helvetica" style="font-family: Helvetica;">Helvetica</option>
 				<option value="Verdana" style="font-family: Verdana;">Verdana</option>
@@ -684,6 +694,11 @@ input[type="number"]:focus {
 				<option value="Open Sans" style="font-family: 'Open Sans';">Open Sans</option>
 				<option value="Lato" style="font-family: 'Lato';">Lato</option>
 				<option value="Poppins" style="font-family: 'Poppins';">Poppins</option>
+				<option value="Futura" style="font-family: Futura;">Futura</option>
+			</optgroup>
+
+			<!-- Serif fonts -->
+			<optgroup label="Serif">
 				<option value="Times New Roman" style="font-family: 'Times New Roman';">Times New Roman</option>
 				<option value="Palatino Linotype" style="font-family: 'Palatino Linotype';">Palatino Linotype</option>
 				<option value="Cambria" style="font-family: 'Cambria';">Cambria</option>
@@ -692,16 +707,35 @@ input[type="number"]:focus {
 				<option value="Didot" style="font-family: 'Didot';">Didot</option>
 				<option value="Bodoni MT" style="font-family: 'Bodoni MT';">Bodoni MT</option>
 				<option value="Georgia" style="font-family: Georgia;">Georgia</option>
+				<option value="Copperplate" style="font-family: Copperplate;">Copperplate</option>
+			</optgroup>
+
+			<!-- Monospaced fonts -->
+			<optgroup label="Monospaced">
 				<option value="Courier New" style="font-family: 'Courier New';">Courier New</option>
 				<option value="Courier" style="font-family: Courier;">Courier</option>
 				<option value="Lucida Console" style="font-family: 'Lucida Console';">Lucida Console</option>
+			</optgroup>
+
+			<!-- Decorative fonts -->
+			<optgroup label="Decorative">
 				<option value="Comic Sans MS" style="font-family: 'Comic Sans MS';">Comic Sans MS</option>
 				<option value="Brush Script MT" style="font-family: 'Brush Script MT';">Brush Script MT</option>
 				<option value="Impact" style="font-family: Impact;">Impact</option>
 				<option value="Arial Black" style="font-family: 'Arial Black';">Arial Black</option>
-				<option value="Futura" style="font-family: Futura;">Futura</option>
-				<option value="Copperplate" style="font-family: Copperplate;">Copperplate</option>
-			</select>
+				<option value="Lobster" style="font-family: 'Lobster';">Lobster</option>
+				<option value="Pacifico" style="font-family: 'Pacifico';">Pacifico</option>
+				<option value="Caveat" style="font-family: 'Caveat';">Caveat</option>
+				<option value="Shadows Into Light" style="font-family: 'Shadows Into Light';">Shadows Into Light</option>
+				<option value="Fredoka One" style="font-family: 'Fredoka One';">Fredoka One</option>
+				<option value="Righteous" style="font-family: 'Righteous';">Righteous</option>
+				<option value="Monoton" style="font-family: 'Monoton';">Monoton</option>
+				<option value="Amatic SC" style="font-family: 'Amatic SC';">Amatic SC</option>
+				<option value="Bangers" style="font-family: 'Bangers';">Bangers</option>
+			</optgroup>
+		</select>
+
+
 
 
 
