@@ -4,6 +4,7 @@
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
 
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
@@ -544,6 +545,15 @@ input[type="number"]:focus {
     </div>
 </div>
 
+<div class="modal" id="untappdModal" style="display: none;">
+  <div class="modal-content">
+    <span id="closeUntappdModal" class="close">&times;</span>
+    <h2>Enter Untappd URL</h2>
+    <input type="text" id="untappdUrl" placeholder="https://untappd.com/brygg-for-ukraina/">
+    <button id="createUntappdQr">Create QR Code</button>
+  </div>
+</div>
+
 <div class="modal" id="pixabay-modal-content" style="display: none;">
 <div class="pixabay-modal-content">
             <span class="close-button" onclick="hidePixabayModal()">×</span>
@@ -759,6 +769,7 @@ input[type="number"]:focus {
 
 			<input type="color" class="color-button" id="backgroundcolorPicker" value="#FFFFFF">
 			<input type="number" id="backgroundsTransparency" min="0" max="100" value="100">
+
 		</div>
 			
 		</div>
@@ -780,6 +791,9 @@ input[type="number"]:focus {
 				<div class="vertical-divider"></div>
 					<label for="imageTransparency">Transparens:</label>
 					<input type="number" id="imageTransparency" min="0" max="100" value="100">
+			<div class="vertical-divider"></div>
+
+			<button id="untappdButton">Untappd</button>
 		</div>
 		</div>
 		
@@ -2254,7 +2268,7 @@ function init_images() {
 
 
 
-// Generisk funktion som skapar en beskärd PNG baserat på cuttingRect
+// Generisk funktion som skapar en beskärd PNG baserat på cuttingRect 
 function generateExportCanvas(format, callback) {
     const originalZoom = canvas.getZoom();
     const originalCuttingRectVisibility = cuttingRect ? cuttingRect.visible : false;
@@ -2277,6 +2291,7 @@ function generateExportCanvas(format, callback) {
         canvas.renderAll(); // Rendera om canvasen efter att cuttingRect har dolts
     }
 
+    // Sätt beskärningspositioner och storlek
     const left = cuttingRect ? cuttingRect.left || 0 : 0;
     const top = cuttingRect ? cuttingRect.top || 0 : 0;
     const width = cuttingRect ? cuttingRect.width * cuttingRect.scaleX : 2000;  // Default till 2000px
@@ -2311,16 +2326,34 @@ function generateExportCanvas(format, callback) {
         }
     });
 
-    tempCanvas.renderAll();
+    // Sätt Untappd QR-koden på rätt position
+    const untappdGroup = canvas.getObjects().find(obj => obj.name === "untappd");
+    if (untappdGroup) {
+        untappdGroup.clone(clonedUntappdGroup => {
+            clonedUntappdGroup.left -= left;
+            clonedUntappdGroup.top -= top;
+            tempCanvas.add(clonedUntappdGroup);
+            tempCanvas.renderAll();
 
-    // Hantering av olika exportformat
-    if (format === 'png') {
-        // Exportera canvasen som en PNG-data URL
-        callback(tempCanvas.toDataURL('image/png'));
+            // Exportera canvasen som PNG
+            if (format === 'png') {
+                callback(tempCanvas.toDataURL('image/png'));
+            }
+
+            // Ta bort tempCanvas och frigör minne
+            tempCanvas.dispose();
+        });
+    } else {
+        tempCanvas.renderAll();
+
+        // Exportera canvasen som PNG
+        if (format === 'png') {
+            callback(tempCanvas.toDataURL('image/png'));
+        }
+
+        // Ta bort tempCanvas och frigör minne
+        tempCanvas.dispose();
     }
-
-    // Ta bort tempCanvas och frigör minne
-    tempCanvas.dispose();
 
     // Återställ ursprungliga skalning och positioner för alla objekt
     canvas.getObjects().forEach((obj, index) => {
@@ -2340,6 +2373,7 @@ function generateExportCanvas(format, callback) {
     }
     canvas.renderAll(); // Rendera om canvasen en sista gång efter att cuttingRect synligheten återställts
 }
+
 
 
 
@@ -2643,6 +2677,116 @@ function setBackgroundImageToCanvas(imageUrl) {
 
 // Lägg till eventlistener för att öppna Pixabay-modal vid knapptryckning
 document.getElementById('pixabaySearchButton').addEventListener('click', showPixabayModal);
+
+
+document.getElementById("untappdButton").addEventListener("click", function () {
+  document.getElementById("untappdModal").style.display = "block";
+});
+
+document.getElementById("closeUntappdModal").addEventListener("click", function () {
+  document.getElementById("untappdModal").style.display = "none";
+});
+
+document.getElementById("createUntappdQr").addEventListener("click", function () {
+  const url = document.getElementById("untappdUrl").value;
+  if (url) {
+    createUntappdQrWithFrame(url); // Skapa QR-koden med Untappd-ram
+    document.getElementById("untappdModal").style.display = "none";
+  }
+});
+
+function generateQrCode(url, callback) {
+  try {
+    // Skapa QR-kod med mindre storlek för att minska densiteten
+    const qr = new QRious({
+      value: url,
+      size: 75,          // Mindre basstorlek för färre block (justera efter behov)
+      level: 'H'         // Hög felkorrigering för bättre kvalitet även med färre block
+    });
+
+    const qrImage = new Image();
+    qrImage.src = qr.toDataURL();
+
+    // Anropa callback när bilden har laddats klart
+    qrImage.onload = function () {
+      callback(qrImage);
+    };
+  } catch (error) {
+    console.error("QR-koden kunde inte genereras:", error);
+    callback(null); // Returnera null om det uppstår ett fel
+  }
+}
+
+
+
+function createUntappdQrWithFrame(url) {
+  // Hitta Untappd-QR-kodsobjektet om det redan finns
+  const existingUntappdGroup = canvas.getObjects().find(obj => obj.name === "untappd");
+
+  // Generera QR-kodsbilden asynkront
+  generateQrCode(url, function(qrCodeImage) {
+    if (!qrCodeImage) {
+      console.error("QR-kodsbilden kunde inte skapas.");
+      return; // Avbryt om QR-koden inte kunde genereras
+    }
+
+    if (existingUntappdGroup) {
+      // Uppdatera QR-kodsbilden i det befintliga objektet
+      const qrCodeObject = existingUntappdGroup._objects.find(obj => obj.type === 'image');
+      if (qrCodeObject) {
+        qrCodeObject.setElement(qrCodeImage);
+        qrCodeObject.scaleToWidth(150); // Skala upp QR-koden till den önskade bredden
+        canvas.renderAll(); // Rendera om canvasen för att visa den uppdaterade QR-koden
+      }
+    } else {
+      // Om ingen QR-kod finns, skapa ett nytt Untappd-objekt
+
+      // Justera storlek och skapa bakgrundsrektangel och text
+      const qrCodeSize = 150;
+      qrCodeImage.width = qrCodeSize;
+      qrCodeImage.height = qrCodeSize;
+
+      const backgroundRect = new fabric.Rect({
+        width: qrCodeSize + 20,
+        height: qrCodeSize + 60,
+        fill: '#F1C40F',
+        rx: 10,
+        ry: 10,
+        originX: 'center',
+        originY: 'center'
+      });
+
+      const untappdText = new fabric.Text('UNTAPPD', {
+        fontSize: 20,
+        fill: 'white',
+        top: -qrCodeSize / 2 - 15,
+        originX: 'center',
+        originY: 'center',
+        fontFamily: 'Arial',
+      });
+
+      const qrCodeObject = new fabric.Image(qrCodeImage, {
+        originX: 'center',
+        originY: 'center',
+        top: 15,
+      });
+      qrCodeObject.scaleToWidth(150); // Skala upp QR-koden för att öka blockstorleken
+
+      // Skapa en grupp som kombinerar bakgrundsrektangel, text och QR-kod
+      const untappdGroup = new fabric.Group([backgroundRect, untappdText, qrCodeObject], {
+        left: 100,
+        top: 100,
+        name: 'untappd',
+        lockScalingFlip: true,
+      });
+
+      // Lägg till den nya Untappd-gruppen på canvasen
+      canvas.add(untappdGroup);
+      canvas.setActiveObject(untappdGroup);
+      canvas.renderAll();
+    }
+  });
+}
 
 
 
